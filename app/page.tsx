@@ -135,22 +135,22 @@ export default function HomePage() {
   const c2Y       = useTransform(catHorizProgress, [0.07, 0.11], [48, 0]);
   const c3Opacity = useTransform(catHorizProgress, [0.11, 0.15], [0, 1]);
   const c3Y       = useTransform(catHorizProgress, [0.11, 0.15], [48, 0]);
-  // Cards: 500 → -1800 = 2300px over 0.85 progress = ~2706 px/unit
-  // Start at 500px — just off right edge on mobile (375px viewport), near-edge on desktop
-  // Mobile: 500→-1800 (fine). Desktop adds +700 CSS offset so effective: 1200→-1100 (just off right edge → last card visible)
-  const cardsX = useTransform(catHorizProgress, [0.15, 1.0], [500, -2200]);
-  // Title: same speed 2706 px/unit × 0.28 progress window = ~757px — exits cleanly
-  const catTitleX = useTransform(catHorizProgress, [0.15, 0.43], [0, -1600]);
+  // Desktop starts 1200px off right edge (500 + 700 from no CSS wrapper now).
+  // Mobile stays at 500 (just off 375px viewport). Same end value for both.
+  // All offsets baked into transform values — no CSS translate wrapper (eliminates double-transform jank).
+  const cardsXDesktop = useTransform(catHorizProgress, [0.15, 1.0], [1200, -2000]);
+  const cardsXMobile  = useTransform(catHorizProgress, [0.15, 1.0], [500,  -1800]);
+  const catTitleX     = useTransform(catHorizProgress, [0.15, 0.43], [0, -1600]);
 
-  // Mouse parallax for the sticky panel
+  // Mouse parallax — desktop only (spring stiffness raised, damping raised so it settles fast)
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
-  const springX = useSpring(mouseX, { stiffness: 60, damping: 20 });
-  const springY = useSpring(mouseY, { stiffness: 60, damping: 20 });
-  const parallaxDeepX  = useTransform(springX, [-1, 1], [20, -20]);
-  const parallaxDeepY  = useTransform(springY, [-1, 1], [14, -14]);
-  const parallaxNearX  = useTransform(springX, [-1, 1], [-32, 32]);
-  const parallaxNearY  = useTransform(springY, [-1, 1], [-20, 20]);
+  const springX = useSpring(mouseX, { stiffness: 80, damping: 35 });
+  const springY = useSpring(mouseY, { stiffness: 80, damping: 35 });
+  const parallaxDeepX = useTransform(springX, [-1, 1], [16, -16]);
+  const parallaxDeepY = useTransform(springY, [-1, 1], [10, -10]);
+  const parallaxNearX = useTransform(springX, [-1, 1], [-24, 24]);
+  const parallaxNearY = useTransform(springY, [-1, 1], [-14, 14]);
 
   // "Why Discerning Clients Choose Us" scroll-scrubbed reveal
   const whyTitleRef = useRef(null);
@@ -384,6 +384,7 @@ export default function HomePage() {
         <div
           className="sticky top-0 h-screen overflow-hidden"
           onMouseMove={(e) => {
+            if (window.matchMedia('(hover: none)').matches) return;
             const r = e.currentTarget.getBoundingClientRect();
             mouseX.set((e.clientX - r.left) / r.width * 2 - 1);
             mouseY.set((e.clientY - r.top) / r.height * 2 - 1);
@@ -415,31 +416,26 @@ export default function HomePage() {
             </motion.div>
           </div>
 
-          {/* Cards — slide in from right */}
-          <div className="absolute inset-0 flex items-center" style={{ paddingTop: '80px' }}>
-            {/* md: shift cards baseline right so they start just off the right edge on desktop */}
-            <div className="translate-x-0 md:translate-x-[700px]">
-            <motion.div className="flex gap-4 md:gap-6 pl-4 md:pl-14 pr-4 md:pr-14" style={{ x: cardsX }}>
+          {/* Cards — desktop track */}
+          <div className="hidden md:flex absolute inset-0 items-center" style={{ paddingTop: '80px' }}>
+            <motion.div
+              className="flex gap-6 pl-14 pr-14"
+              style={{ x: cardsXDesktop, willChange: 'transform' }}
+            >
               {categories.map((cat, i) => (
                 <Link key={i} href={cat.href} className="flex-shrink-0">
                   <motion.div
-                    className="relative overflow-hidden rounded-2xl cursor-pointer group w-[88vw] md:w-[260px] lg:w-[300px]"
-                    style={{
-                      height: 'clamp(380px, 58vh, 540px)',
-                      background: `linear-gradient(155deg, ${cat.from}, ${cat.to})`,
-                    }}
+                    className="relative overflow-hidden rounded-2xl cursor-pointer group"
+                    style={{ width: '280px', height: 'clamp(380px, 58vh, 520px)', background: `linear-gradient(155deg, ${cat.from}, ${cat.to})` }}
                     whileHover={{ scale: 1.02, y: -6 }}
                     transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                   >
-                    {/* Deep parallax orbs */}
+                    {/* Deep parallax orbs — desktop only */}
                     <motion.div className="absolute rounded-full pointer-events-none" style={{ width: '240px', height: '240px', background: `radial-gradient(circle, ${cat.accentBg} 0%, transparent 70%)`, top: '-40px', right: '-50px', x: parallaxDeepX, y: parallaxDeepY }} />
                     <motion.div className="absolute rounded-full pointer-events-none" style={{ width: '130px', height: '130px', background: `radial-gradient(circle, ${cat.accentBg} 0%, transparent 70%)`, bottom: '90px', left: '-25px', x: parallaxDeepX, y: parallaxDeepY }} />
-
-                    {/* Near parallax particles */}
+                    {/* Near particles — desktop only, reduced to 2 */}
                     <motion.div className="absolute rounded-full pointer-events-none" style={{ width: '6px', height: '6px', background: cat.accent, top: '26%', left: '20%', x: parallaxNearX, y: parallaxNearY, opacity: 0.6 }} />
                     <motion.div className="absolute rounded-full pointer-events-none" style={{ width: '4px', height: '4px', background: cat.accent, top: '50%', right: '18%', x: parallaxNearX, y: parallaxNearY, opacity: 0.35 }} />
-                    <motion.div className="absolute rounded-full pointer-events-none" style={{ width: '5px', height: '5px', background: cat.accent, top: '16%', right: '32%', x: parallaxNearX, y: parallaxNearY, opacity: 0.45 }} />
-                    <motion.div className="absolute pointer-events-none" style={{ width: '28px', height: '1px', background: cat.accent, top: '38%', right: '16%', x: parallaxNearX, y: parallaxNearY, opacity: 0.3 }} />
 
                     {/* Watermark number */}
                     <div className="absolute top-5 left-6 font-cormorant leading-none select-none pointer-events-none" style={{ fontSize: 'clamp(4.5rem, 7vw, 6.5rem)', fontWeight: 300, color: 'rgba(255,255,255,0.05)' }}>
@@ -472,7 +468,42 @@ export default function HomePage() {
                 </Link>
               ))}
             </motion.div>
-            </div>
+          </div>
+
+          {/* Cards — mobile track (no parallax, no hover, static orbs) */}
+          <div className="flex md:hidden absolute inset-0 items-center" style={{ paddingTop: '80px' }}>
+            <motion.div
+              className="flex gap-4 pl-4 pr-4"
+              style={{ x: cardsXMobile, willChange: 'transform' }}
+            >
+              {categories.map((cat, i) => (
+                <Link key={i} href={cat.href} className="flex-shrink-0">
+                  <div
+                    className="relative overflow-hidden rounded-2xl w-[88vw]"
+                    style={{ height: 'clamp(360px, 55vh, 480px)', background: `linear-gradient(155deg, ${cat.from}, ${cat.to})` }}
+                  >
+                    {/* Static orbs — no motion, no springs */}
+                    <div className="absolute rounded-full pointer-events-none" style={{ width: '220px', height: '220px', background: `radial-gradient(circle, ${cat.accentBg} 0%, transparent 70%)`, top: '-40px', right: '-50px' }} />
+                    <div className="absolute rounded-full pointer-events-none" style={{ width: '110px', height: '110px', background: `radial-gradient(circle, ${cat.accentBg} 0%, transparent 70%)`, bottom: '80px', left: '-25px' }} />
+                    {/* Static dot accent */}
+                    <div className="absolute rounded-full pointer-events-none" style={{ width: '6px', height: '6px', background: cat.accent, top: '26%', left: '20%', opacity: 0.5 }} />
+                    <div className="absolute rounded-full pointer-events-none" style={{ width: '4px', height: '4px', background: cat.accent, top: '50%', right: '18%', opacity: 0.3 }} />
+                    {/* Watermark number */}
+                    <div className="absolute top-5 left-6 font-cormorant leading-none select-none pointer-events-none" style={{ fontSize: '5.5rem', fontWeight: 300, color: 'rgba(255,255,255,0.05)' }}>{cat.num}</div>
+                    <div className="absolute top-0 left-6 right-6 h-px" style={{ background: `linear-gradient(90deg, transparent, ${cat.accent}60, transparent)` }} />
+                    <div className="absolute bottom-0 left-0 right-0 p-6" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.82) 0%, transparent 100%)' }}>
+                      <p className="font-inter text-[9px] tracking-[0.2em] uppercase mb-2.5" style={{ color: cat.accent, opacity: 0.85 }}>{cat.detail}</p>
+                      <h3 className="font-cormorant text-white leading-none mb-2" style={{ fontSize: '2.4rem', fontWeight: 300 }}>{cat.label}</h3>
+                      <p className="font-inter text-xs text-white/40 mb-5 leading-relaxed">{cat.tagline}</p>
+                      <div className="flex items-center gap-2" style={{ color: cat.accent, opacity: 0.55 }}>
+                        <span className="font-inter text-[9px] tracking-widest uppercase">Explore Setups</span>
+                        <ArrowRight className="w-3 h-3" />
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </motion.div>
           </div>
 
           {/* Scroll hint */}
