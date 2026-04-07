@@ -17,10 +17,10 @@ export default function LenisProvider({ children }: { children: ReactNode }) {
           touchMultiplier: 2,
         });
 
-        function raf(time: number) {
+        const raf = (time: number) => {
           lenis.raf(time);
           requestAnimationFrame(raf);
-        }
+        };
 
         requestAnimationFrame(raf);
       } catch (error) {
