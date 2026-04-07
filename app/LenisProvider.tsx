@@ -5,6 +5,7 @@ import { useEffect, ReactNode } from 'react';
 export default function LenisProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let lenis: any = null;
+    let animationId: number;
 
     const initLenis = async () => {
       try {
@@ -19,22 +20,20 @@ export default function LenisProvider({ children }: { children: ReactNode }) {
 
         const raf = (time: number) => {
           lenis.raf(time);
-          requestAnimationFrame(raf);
+          animationId = requestAnimationFrame(raf);
         };
 
-        requestAnimationFrame(raf);
-      } catch (error) {
-        // Lenis not available, smooth scroll via CSS is fallback
-        console.warn('Lenis smooth scroll not initialized:', error);
+        animationId = requestAnimationFrame(raf);
+      } catch {
+        // Lenis not available, CSS scroll-behavior is fallback
       }
     };
 
     initLenis();
 
     return () => {
-      if (lenis) {
-        lenis.destroy();
-      }
+      if (animationId) cancelAnimationFrame(animationId);
+      if (lenis) lenis.destroy();
     };
   }, []);
 
