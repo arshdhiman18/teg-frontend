@@ -292,7 +292,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   // Stats
   const stats = {
     total: products.length,
-    categories: [...new Set(products.map((p) => p.category))].length,
+    categories: products.map((p) => p.category).filter((v, i, a) => a.indexOf(v) === i).length,
     featured: products.filter((p) => p.featured).length,
   };
 
