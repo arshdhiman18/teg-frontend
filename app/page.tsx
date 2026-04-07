@@ -2,20 +2,13 @@
 
 import { useRef } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-import { motion, useInView, useScroll, useTransform, type MotionValue } from 'framer-motion';
+import { motion, useInView, useScroll, useTransform, useMotionValue, useSpring, type MotionValue } from 'framer-motion';
 import {
   ArrowRight,
   Sparkles,
   Shield,
   IndianRupee,
   Star,
-  Cake,
-  Heart,
-  Briefcase,
-  Baby,
-  Gift,
-  Gem,
 } from 'lucide-react';
 
 const storyCards = [
@@ -50,12 +43,12 @@ const storyCards = [
 ];
 
 const categories = [
-  { label: 'Birthday', icon: Cake, href: '/collections?category=Birthday', color: 'bg-pink-50 text-pink-600 border-pink-100' },
-  { label: 'Wedding', icon: Heart, href: '/collections?category=Wedding', color: 'bg-rose-50 text-rose-600 border-rose-100' },
-  { label: 'Anniversary', icon: Gem, href: '/collections?category=Anniversary', color: 'bg-purple-50 text-purple-600 border-purple-100' },
-  { label: 'Corporate', icon: Briefcase, href: '/collections?category=Corporate', color: 'bg-slate-50 text-slate-600 border-slate-100' },
-  { label: 'Baby Shower', icon: Baby, href: '/collections?category=Baby Shower', color: 'bg-yellow-50 text-yellow-600 border-yellow-100' },
-  { label: 'Engagement', icon: Gift, href: '/collections?category=Engagement', color: 'bg-indigo-50 text-indigo-600 border-indigo-100' },
+  { num: '01', label: 'Birthday',    tagline: 'Turn another year into a legendary night', detail: 'Balloon arches · Neon signs · Floral walls',        href: '/collections?category=Birthday',    from: '#1a0a2e', to: '#2d1547', accent: '#e879f9',  accentBg: 'rgba(232,121,249,0.10)' },
+  { num: '02', label: 'Wedding',     tagline: 'Where forever begins',                      detail: 'Grand mandaps · Floral drapes · Fairy lights',    href: '/collections?category=Wedding',     from: '#1F3D3A', to: '#0d1f1c', accent: '#C6A769',  accentBg: 'rgba(198,167,105,0.10)' },
+  { num: '03', label: 'Anniversary', tagline: 'Celebrate years of love',                   detail: 'Intimate setups · Rose showers · Candlelight',    href: '/collections?category=Anniversary', from: '#2d1a1a', to: '#1a0d0d', accent: '#f87171',  accentBg: 'rgba(248,113,113,0.10)' },
+  { num: '04', label: 'Corporate',   tagline: 'Impress. Inspire. Elevate.',                detail: 'Brand setups · Awards nights · Team events',       href: '/collections?category=Corporate',   from: '#0f1a2e', to: '#0a1020', accent: '#60a5fa',  accentBg: 'rgba(96,165,250,0.10)'  },
+  { num: '05', label: 'Baby Shower', tagline: 'Welcome little wonders',                    detail: 'Pastel themes · Balloon clouds · Floral arches',  href: '/collections?category=Baby Shower', from: '#0d1f18', to: '#071410', accent: '#86efac',  accentBg: 'rgba(134,239,172,0.10)' },
+  { num: '06', label: 'Engagement',  tagline: 'The moment that changes everything',        detail: 'Proposal setups · Ring reveals · Petal showers',  href: '/collections?category=Engagement',  from: '#2a1a2d', to: '#1a0d1f', accent: '#c084fc',  accentBg: 'rgba(192,132,252,0.10)' },
 ];
 
 const whyTEG = [
@@ -129,17 +122,35 @@ export default function HomePage() {
   const w3Opacity = useTransform(titleProgress, [0.6, 0.78], [0, 1]);
   const w3Y       = useTransform(titleProgress, [0.6, 0.78], [48, 0]);
 
-  // "Every Celebration Deserves Magic" scroll-scrubbed reveal
-  const catTitleRef = useRef(null);
-  const { scrollYProgress: catProgress } = useScroll({ target: catTitleRef, offset: ['start 0.88', 'start 0.1'] });
-  const c0Opacity = useTransform(catProgress, [0, 0.2], [0, 1]);
-  const c0Y       = useTransform(catProgress, [0, 0.2], [48, 0]);
-  const c1Opacity = useTransform(catProgress, [0.22, 0.42], [0, 1]);
-  const c1Y       = useTransform(catProgress, [0.22, 0.42], [48, 0]);
-  const c2Opacity = useTransform(catProgress, [0.44, 0.64], [0, 1]);
-  const c2Y       = useTransform(catProgress, [0.44, 0.64], [48, 0]);
-  const c3Opacity = useTransform(catProgress, [0.66, 0.86], [0, 1]);
-  const c3Y       = useTransform(catProgress, [0.66, 0.86], [48, 0]);
+  // "Every Celebration Deserves Magic" + horizontal card scroll (unified)
+  const catHorizRef = useRef<HTMLDivElement>(null);
+  // Start when section is 80% down viewport (20% of prev section still visible)
+  const { scrollYProgress: catHorizProgress } = useScroll({ target: catHorizRef, offset: ['start 0.8', 'end end'] });
+  // Words reveal (0 → 14%)
+  const c0Opacity = useTransform(catHorizProgress, [0,    0.03], [0, 1]);
+  const c0Y       = useTransform(catHorizProgress, [0,    0.03], [48, 0]);
+  const c1Opacity = useTransform(catHorizProgress, [0.03, 0.07], [0, 1]);
+  const c1Y       = useTransform(catHorizProgress, [0.03, 0.07], [48, 0]);
+  const c2Opacity = useTransform(catHorizProgress, [0.07, 0.11], [0, 1]);
+  const c2Y       = useTransform(catHorizProgress, [0.07, 0.11], [48, 0]);
+  const c3Opacity = useTransform(catHorizProgress, [0.11, 0.15], [0, 1]);
+  const c3Y       = useTransform(catHorizProgress, [0.11, 0.15], [48, 0]);
+  // Cards: 500 → -1800 = 2300px over 0.85 progress = ~2706 px/unit
+  // Start at 500px — just off right edge on mobile (375px viewport), near-edge on desktop
+  // Mobile: 500→-1800 (fine). Desktop adds +700 CSS offset so effective: 1200→-1100 (just off right edge → last card visible)
+  const cardsX = useTransform(catHorizProgress, [0.15, 1.0], [500, -2200]);
+  // Title: same speed 2706 px/unit × 0.28 progress window = ~757px — exits cleanly
+  const catTitleX = useTransform(catHorizProgress, [0.15, 0.43], [0, -1600]);
+
+  // Mouse parallax for the sticky panel
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const springX = useSpring(mouseX, { stiffness: 60, damping: 20 });
+  const springY = useSpring(mouseY, { stiffness: 60, damping: 20 });
+  const parallaxDeepX  = useTransform(springX, [-1, 1], [20, -20]);
+  const parallaxDeepY  = useTransform(springY, [-1, 1], [14, -14]);
+  const parallaxNearX  = useTransform(springX, [-1, 1], [-32, 32]);
+  const parallaxNearY  = useTransform(springY, [-1, 1], [-20, 20]);
 
   // "Why Discerning Clients Choose Us" scroll-scrubbed reveal
   const whyTitleRef = useRef(null);
@@ -364,52 +375,113 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ===== FEATURED CATEGORIES ===== */}
-      <section className="bg-white section-padding">
-        <div className="max-w-7xl mx-auto px-4">
-          <div ref={catTitleRef} className="text-center mb-16">
-            <motion.p className="font-inter text-xs text-primary tracking-widest uppercase mb-3" style={{ opacity: c0Opacity, y: c0Y }}>
-              Browse by Occasion
-            </motion.p>
-            <h2 className="font-cormorant text-4xl md:text-5xl lg:text-6xl font-light text-dark leading-tight">
-              <motion.span style={{ display: 'inline-block', marginRight: '0.3em', opacity: c1Opacity, y: c1Y }}>Every</motion.span>
-              <motion.span style={{ display: 'inline-block', marginRight: '0.3em', opacity: c2Opacity, y: c2Y }}>Celebration</motion.span>
-              <motion.span style={{ display: 'inline-block', marginRight: '0.3em', opacity: c3Opacity, y: c3Y }}>Deserves</motion.span>
-              <motion.span style={{ display: 'inline-block', opacity: c3Opacity, y: c3Y }} className="text-gold font-medium">Magic</motion.span>
-            </h2>
+      {/* ===== FEATURED CATEGORIES — big title → horizontal cards ===== */}
+      <div
+        ref={catHorizRef}
+        className="relative bg-dark"
+        style={{ height: 'calc(100vh + 3200px)' }}
+      >
+        <div
+          className="sticky top-0 h-screen overflow-hidden"
+          onMouseMove={(e) => {
+            const r = e.currentTarget.getBoundingClientRect();
+            mouseX.set((e.clientX - r.left) / r.width * 2 - 1);
+            mouseY.set((e.clientY - r.top) / r.height * 2 - 1);
+          }}
+          onMouseLeave={() => { mouseX.set(0); mouseY.set(0); }}
+        >
+          {/* Ambient glow */}
+          <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 70% 50% at 30% 50%, rgba(74,151,138,0.06) 0%, transparent 70%)' }} />
+
+          {/* BIG centered title — reveals word by word, then shrinks+fades away */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ paddingTop: '80px' }}>
+            <motion.div
+              style={{ x: catTitleX }}
+              className="text-center px-6"
+            >
+              <motion.p
+                className="font-inter text-xs text-primary tracking-widest uppercase mb-4"
+                style={{ opacity: c0Opacity, y: c0Y }}
+              >
+                Browse by Occasion
+              </motion.p>
+              <h2 className="font-cormorant font-light text-white leading-[1.05]" style={{ fontSize: 'clamp(3.2rem, 7vw, 7rem)' }}>
+                <motion.span style={{ display: 'inline-block', marginRight: '0.28em', opacity: c1Opacity, y: c1Y }}>Every</motion.span>
+                <motion.span style={{ display: 'inline-block', marginRight: '0.28em', opacity: c2Opacity, y: c2Y }}>Celebration</motion.span>
+                <br />
+                <motion.span style={{ display: 'inline-block', marginRight: '0.28em', opacity: c3Opacity, y: c3Y }}>Deserves</motion.span>
+                <motion.span style={{ display: 'inline-block', opacity: c3Opacity, y: c3Y }} className="text-gold font-medium">Magic</motion.span>
+              </h2>
+            </motion.div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-            {categories.map((cat, i) => {
-              const Icon = cat.icon;
-              return (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.08, duration: 0.6 }}
-                >
-                  <Link
-                    href={cat.href}
-                    className={`group flex flex-col items-center justify-center gap-4 p-8 rounded-3xl border ${cat.color} hover:shadow-luxury-hover hover:-translate-y-2 transition-all duration-500 text-center`}
+          {/* Cards — slide in from right */}
+          <div className="absolute inset-0 flex items-center" style={{ paddingTop: '80px' }}>
+            {/* md: shift cards baseline right so they start just off the right edge on desktop */}
+            <div className="translate-x-0 md:translate-x-[700px]">
+            <motion.div className="flex gap-4 md:gap-6 pl-4 md:pl-14 pr-4 md:pr-14" style={{ x: cardsX }}>
+              {categories.map((cat, i) => (
+                <Link key={i} href={cat.href} className="flex-shrink-0">
+                  <motion.div
+                    className="relative overflow-hidden rounded-2xl cursor-pointer group w-[88vw] md:w-[260px] lg:w-[300px]"
+                    style={{
+                      height: 'clamp(380px, 58vh, 540px)',
+                      background: `linear-gradient(155deg, ${cat.from}, ${cat.to})`,
+                    }}
+                    whileHover={{ scale: 1.02, y: -6 }}
+                    transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                   >
-                    <div className="w-14 h-14 rounded-2xl bg-white/80 shadow-luxury flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                      <Icon className="w-6 h-6" />
+                    {/* Deep parallax orbs */}
+                    <motion.div className="absolute rounded-full pointer-events-none" style={{ width: '240px', height: '240px', background: `radial-gradient(circle, ${cat.accentBg} 0%, transparent 70%)`, top: '-40px', right: '-50px', x: parallaxDeepX, y: parallaxDeepY }} />
+                    <motion.div className="absolute rounded-full pointer-events-none" style={{ width: '130px', height: '130px', background: `radial-gradient(circle, ${cat.accentBg} 0%, transparent 70%)`, bottom: '90px', left: '-25px', x: parallaxDeepX, y: parallaxDeepY }} />
+
+                    {/* Near parallax particles */}
+                    <motion.div className="absolute rounded-full pointer-events-none" style={{ width: '6px', height: '6px', background: cat.accent, top: '26%', left: '20%', x: parallaxNearX, y: parallaxNearY, opacity: 0.6 }} />
+                    <motion.div className="absolute rounded-full pointer-events-none" style={{ width: '4px', height: '4px', background: cat.accent, top: '50%', right: '18%', x: parallaxNearX, y: parallaxNearY, opacity: 0.35 }} />
+                    <motion.div className="absolute rounded-full pointer-events-none" style={{ width: '5px', height: '5px', background: cat.accent, top: '16%', right: '32%', x: parallaxNearX, y: parallaxNearY, opacity: 0.45 }} />
+                    <motion.div className="absolute pointer-events-none" style={{ width: '28px', height: '1px', background: cat.accent, top: '38%', right: '16%', x: parallaxNearX, y: parallaxNearY, opacity: 0.3 }} />
+
+                    {/* Watermark number */}
+                    <div className="absolute top-5 left-6 font-cormorant leading-none select-none pointer-events-none" style={{ fontSize: 'clamp(4.5rem, 7vw, 6.5rem)', fontWeight: 300, color: 'rgba(255,255,255,0.05)' }}>
+                      {cat.num}
                     </div>
-                    <div>
-                      <h3 className="font-playfair text-lg font-semibold text-dark group-hover:text-current transition-colors">
+
+                    {/* Accent top line */}
+                    <div className="absolute top-0 left-6 right-6 h-px" style={{ background: `linear-gradient(90deg, transparent, ${cat.accent}60, transparent)` }} />
+
+                    {/* Content */}
+                    <div className="absolute bottom-0 left-0 right-0 p-6" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.82) 0%, transparent 100%)' }}>
+                      <p className="font-inter text-[9px] tracking-[0.2em] uppercase mb-2.5 leading-relaxed" style={{ color: cat.accent, opacity: 0.85 }}>
+                        {cat.detail}
+                      </p>
+                      <h3 className="font-cormorant text-white leading-none mb-2" style={{ fontSize: 'clamp(2rem, 3.2vw, 2.8rem)', fontWeight: 300 }}>
                         {cat.label}
                       </h3>
-                      <p className="font-inter text-xs text-dark/40 mt-1">View setups →</p>
+                      <p className="font-inter text-xs text-white/40 mb-5 leading-relaxed">
+                        {cat.tagline}
+                      </p>
+                      <div className="flex items-center gap-2" style={{ color: cat.accent, opacity: 0.55 }}>
+                        <span className="font-inter text-[9px] tracking-widest uppercase group-hover:opacity-100 transition-opacity duration-300">Explore Setups</span>
+                        <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform duration-300" />
+                      </div>
                     </div>
-                  </Link>
-                </motion.div>
-              );
-            })}
+
+                    {/* Hover border glow */}
+                    <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style={{ boxShadow: `inset 0 0 0 1px ${cat.accent}45` }} />
+                  </motion.div>
+                </Link>
+              ))}
+            </motion.div>
+            </div>
+          </div>
+
+          {/* Scroll hint */}
+          <div className="absolute bottom-7 right-8 md:right-14 flex items-center gap-2 pointer-events-none" style={{ color: 'rgba(255,255,255,0.18)' }}>
+            <span className="font-inter text-[9px] tracking-widest uppercase">Scroll to explore</span>
+            <ArrowRight className="w-3 h-3" />
           </div>
         </div>
-      </section>
+      </div>
 
       {/* ===== WHY TEG ===== */}
       <section className="bg-light section-padding">
