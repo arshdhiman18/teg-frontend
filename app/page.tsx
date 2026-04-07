@@ -10,7 +10,6 @@ import {
   Shield,
   IndianRupee,
   Star,
-  MessageCircle,
   Cake,
   Heart,
   Briefcase,
@@ -102,7 +101,43 @@ export default function HomePage() {
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
   const heroY = useTransform(scrollYProgress, [0, 1], ['0%', '30%']);
   const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
-  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '919999999999';
+
+  // Story title — scroll-scrubbed word reveal (GSAP ScrollTrigger equivalent)
+  const titleRef = useRef(null);
+  const { scrollYProgress: titleProgress } = useScroll({ target: titleRef, offset: ['start 0.88', 'start 0.1'] });
+  const w0Opacity = useTransform(titleProgress, [0, 0.18], [0, 1]);
+  const w0Y       = useTransform(titleProgress, [0, 0.18], [48, 0]);
+  const w1Opacity = useTransform(titleProgress, [0.2, 0.38], [0, 1]);
+  const w1Y       = useTransform(titleProgress, [0.2, 0.38], [48, 0]);
+  const w2Opacity = useTransform(titleProgress, [0.4, 0.58], [0, 1]);
+  const w2Y       = useTransform(titleProgress, [0.4, 0.58], [48, 0]);
+  const w3Opacity = useTransform(titleProgress, [0.6, 0.78], [0, 1]);
+  const w3Y       = useTransform(titleProgress, [0.6, 0.78], [48, 0]);
+
+  // "Every Celebration Deserves Magic" scroll-scrubbed reveal
+  const catTitleRef = useRef(null);
+  const { scrollYProgress: catProgress } = useScroll({ target: catTitleRef, offset: ['start 0.88', 'start 0.1'] });
+  const c0Opacity = useTransform(catProgress, [0, 0.2], [0, 1]);
+  const c0Y       = useTransform(catProgress, [0, 0.2], [48, 0]);
+  const c1Opacity = useTransform(catProgress, [0.22, 0.42], [0, 1]);
+  const c1Y       = useTransform(catProgress, [0.22, 0.42], [48, 0]);
+  const c2Opacity = useTransform(catProgress, [0.44, 0.64], [0, 1]);
+  const c2Y       = useTransform(catProgress, [0.44, 0.64], [48, 0]);
+  const c3Opacity = useTransform(catProgress, [0.66, 0.86], [0, 1]);
+  const c3Y       = useTransform(catProgress, [0.66, 0.86], [48, 0]);
+
+  // "Why Discerning Clients Choose Us" scroll-scrubbed reveal
+  const whyTitleRef = useRef(null);
+  const { scrollYProgress: whyProgress } = useScroll({ target: whyTitleRef, offset: ['start 0.88', 'start 0.1'] });
+  const y0Opacity = useTransform(whyProgress, [0, 0.2], [0, 1]);
+  const y0Y       = useTransform(whyProgress, [0, 0.2], [48, 0]);
+  const y1Opacity = useTransform(whyProgress, [0.22, 0.42], [0, 1]);
+  const y1Y       = useTransform(whyProgress, [0.22, 0.42], [48, 0]);
+  const y2Opacity = useTransform(whyProgress, [0.44, 0.64], [0, 1]);
+  const y2Y       = useTransform(whyProgress, [0.44, 0.64], [48, 0]);
+  const y3Opacity = useTransform(whyProgress, [0.66, 0.86], [0, 1]);
+  const y3Y       = useTransform(whyProgress, [0.66, 0.86], [48, 0]);
+
 
   return (
     <>
@@ -200,32 +235,9 @@ export default function HomePage() {
               Explore Collections
               <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
             </Link>
-            <a
-              href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent('Hi, I would like to plan a luxury event with TEG.')}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2.5 border border-white/20 text-white hover:bg-white/10 font-inter font-medium px-8 py-4 rounded-full text-sm transition-all duration-300"
-            >
-              <MessageCircle className="w-4 h-4" />
-              WhatsApp Us
-            </a>
           </motion.div>
         </motion.div>
 
-        {/* Scroll indicator */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 2 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
-        >
-          <span className="font-inter text-xs text-white/30 tracking-widest uppercase">Scroll</span>
-          <motion.div
-            animate={{ y: [0, 8, 0] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-            className="w-px h-8 bg-gradient-to-b from-gold/40 to-transparent"
-          />
-        </motion.div>
       </section>
 
       {/* ===== STATS BAR ===== */}
@@ -262,12 +274,20 @@ export default function HomePage() {
       {/* ===== STORY CARDS - HORIZONTAL SCROLL ===== */}
       <section className="bg-light section-padding overflow-hidden">
         <div className="max-w-7xl mx-auto">
-          <AnimatedSection className="text-center mb-16 px-4">
-            <p className="font-inter text-xs text-primary tracking-widest uppercase mb-3">Our Process</p>
-            <h2 className="font-cormorant text-4xl md:text-5xl font-light text-dark">
-              From Vision to <em className="text-gold not-italic font-medium">Memory</em>
+          <div ref={titleRef} className="text-center mb-16 px-4">
+            <motion.p
+              className="font-inter text-xs text-primary tracking-widest uppercase mb-4"
+              style={{ opacity: w0Opacity, y: w0Y }}
+            >
+              Our Process
+            </motion.p>
+            <h2 className="font-cormorant text-4xl md:text-5xl lg:text-6xl font-light text-dark leading-tight">
+              <motion.span style={{ display: 'inline-block', marginRight: '0.3em', opacity: w1Opacity, y: w1Y }}>From</motion.span>
+              <motion.span style={{ display: 'inline-block', marginRight: '0.3em', opacity: w2Opacity, y: w2Y }}>Vision</motion.span>
+              <motion.span style={{ display: 'inline-block', marginRight: '0.3em', opacity: w2Opacity, y: w2Y }}>to</motion.span>
+              <motion.span style={{ display: 'inline-block', opacity: w3Opacity, y: w3Y }} className="text-gold font-medium">Memory</motion.span>
             </h2>
-          </AnimatedSection>
+          </div>
 
           {/* Desktop: horizontal cards in a row */}
           <div className="hidden lg:grid lg:grid-cols-4 gap-6 px-4">
@@ -321,12 +341,17 @@ export default function HomePage() {
       {/* ===== FEATURED CATEGORIES ===== */}
       <section className="bg-white section-padding">
         <div className="max-w-7xl mx-auto px-4">
-          <AnimatedSection className="text-center mb-16">
-            <p className="font-inter text-xs text-primary tracking-widest uppercase mb-3">Browse by Occasion</p>
-            <h2 className="font-cormorant text-4xl md:text-5xl font-light text-dark">
-              Every Celebration <em className="text-gold not-italic font-medium">Deserves Magic</em>
+          <div ref={catTitleRef} className="text-center mb-16">
+            <motion.p className="font-inter text-xs text-primary tracking-widest uppercase mb-3" style={{ opacity: c0Opacity, y: c0Y }}>
+              Browse by Occasion
+            </motion.p>
+            <h2 className="font-cormorant text-4xl md:text-5xl lg:text-6xl font-light text-dark leading-tight">
+              <motion.span style={{ display: 'inline-block', marginRight: '0.3em', opacity: c1Opacity, y: c1Y }}>Every</motion.span>
+              <motion.span style={{ display: 'inline-block', marginRight: '0.3em', opacity: c2Opacity, y: c2Y }}>Celebration</motion.span>
+              <motion.span style={{ display: 'inline-block', marginRight: '0.3em', opacity: c3Opacity, y: c3Y }}>Deserves</motion.span>
+              <motion.span style={{ display: 'inline-block', opacity: c3Opacity, y: c3Y }} className="text-gold font-medium">Magic</motion.span>
             </h2>
-          </AnimatedSection>
+          </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
             {categories.map((cat, i) => {
@@ -363,12 +388,18 @@ export default function HomePage() {
       {/* ===== WHY TEG ===== */}
       <section className="bg-light section-padding">
         <div className="max-w-7xl mx-auto px-4">
-          <AnimatedSection className="text-center mb-16">
-            <p className="font-inter text-xs text-primary tracking-widest uppercase mb-3">The TEG Difference</p>
-            <h2 className="font-cormorant text-4xl md:text-5xl font-light text-dark">
-              Why Discerning Clients <em className="text-gold not-italic font-medium">Choose Us</em>
+          <div ref={whyTitleRef} className="text-center mb-16">
+            <motion.p className="font-inter text-xs text-primary tracking-widest uppercase mb-3" style={{ opacity: y0Opacity, y: y0Y }}>
+              The TEG Difference
+            </motion.p>
+            <h2 className="font-cormorant text-4xl md:text-5xl lg:text-6xl font-light text-dark leading-tight">
+              <motion.span style={{ display: 'inline-block', marginRight: '0.3em', opacity: y1Opacity, y: y1Y }}>Why</motion.span>
+              <motion.span style={{ display: 'inline-block', marginRight: '0.3em', opacity: y1Opacity, y: y1Y }}>Discerning</motion.span>
+              <motion.span style={{ display: 'inline-block', marginRight: '0.3em', opacity: y2Opacity, y: y2Y }}>Clients</motion.span>
+              <motion.span style={{ display: 'inline-block', marginRight: '0.3em', opacity: y3Opacity, y: y3Y }}>Choose</motion.span>
+              <motion.span style={{ display: 'inline-block', opacity: y3Opacity, y: y3Y }} className="text-gold font-medium">Us</motion.span>
             </h2>
-          </AnimatedSection>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {whyTEG.map((item, i) => {
@@ -444,15 +475,6 @@ export default function HomePage() {
                 Browse Packages
                 <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
               </Link>
-              <a
-                href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent('Hi, I\'m ready to plan my event with TEG. Can we discuss?')}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2.5 bg-[#25D366] hover:bg-[#20c05e] text-white font-inter font-semibold px-8 py-4 rounded-full text-sm transition-all duration-300 hover:shadow-[0_4px_20px_rgba(37,211,102,0.4)]"
-              >
-                <MessageCircle className="w-4 h-4 fill-white" />
-                Chat on WhatsApp
-              </a>
             </div>
           </AnimatedSection>
         </div>
