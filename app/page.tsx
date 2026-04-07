@@ -3,7 +3,7 @@
 import { useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion, useInView, useScroll, useTransform } from 'framer-motion';
+import { motion, useInView, useScroll, useTransform, type MotionValue } from 'framer-motion';
 import {
   ArrowRight,
   Sparkles,
@@ -79,6 +79,21 @@ const whyTEG = [
   },
 ];
 
+// Letter-by-letter color scrub — each instance calls useTransform at component level (no hooks-in-loop)
+function AnimatedLetter({ char, index, total, progress, isGold }: {
+  char: string; index: number; total: number;
+  progress: MotionValue<number>; isGold: boolean;
+}) {
+  const color = useTransform(
+    progress,
+    [index / total, (index + 1) / total],
+    isGold
+      ? ['rgba(198,167,105,0.15)', 'rgba(198,167,105,1)']
+      : ['rgba(255,255,255,0.15)', 'rgba(255,255,255,1)']
+  );
+  return <motion.span style={{ color }}>{char}</motion.span>;
+}
+
 function AnimatedSection({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-80px' });
@@ -138,6 +153,17 @@ export default function HomePage() {
   const y3Opacity = useTransform(whyProgress, [0.66, 0.86], [0, 1]);
   const y3Y       = useTransform(whyProgress, [0.66, 0.86], [48, 0]);
 
+  // "Ready to Create Something Extraordinary?" — letter-by-letter color scrub
+  // Words: Ready(5) to(2) Create(6) Something(9) Extraordinary?(14) = 36 letters total
+  const CTA_WORDS = ['Ready', 'to', 'Create', 'Something', 'Extraordinary?'] as const;
+  const CTA_WORD_STARTS = [0, 5, 7, 13, 22] as const; // cumulative letter index before each word
+  const CTA_TOTAL = 36;
+  const ctaTitleRef = useRef(null);
+  const { scrollYProgress: ctaProgress } = useScroll({ target: ctaTitleRef, offset: ['start 0.9', 'start 0.0'] });
+  // Description: tilted → straight after letters reveal
+  const descSkew  = useTransform(ctaProgress, [0.85, 1.0], [6, 0]);
+  const descOpacity = useTransform(ctaProgress, [0.85, 1.0], [0, 1]);
+  const descY     = useTransform(ctaProgress, [0.85, 1.0], [20, 0]);
 
   return (
     <>
@@ -449,7 +475,7 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(74,151,138,0.1),transparent_70%)]" />
         <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-gold/30 to-transparent" />
 
-        <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
+        <div ref={ctaTitleRef} className="max-w-4xl mx-auto px-4 text-center relative z-10">
           <AnimatedSection>
             <div className="inline-flex items-center gap-2 bg-gold/10 border border-gold/20 px-4 py-2 rounded-full mb-8">
               <Star className="w-3.5 h-3.5 text-gold fill-gold" />
@@ -458,14 +484,29 @@ export default function HomePage() {
               </span>
             </div>
 
-            <h2 className="font-playfair text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
-              Ready to Create Something{' '}
-              <span className="text-gold">Extraordinary?</span>
+            <h2 className="font-playfair text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+              {CTA_WORDS.map((word, wi) => (
+                <span key={wi} style={{ display: 'inline-block', whiteSpace: 'nowrap', marginRight: wi < CTA_WORDS.length - 1 ? '0.28em' : 0 }}>
+                  {word.split('').map((char, ci) => (
+                    <AnimatedLetter
+                      key={ci}
+                      char={char}
+                      index={CTA_WORD_STARTS[wi] + ci}
+                      total={CTA_TOTAL}
+                      progress={ctaProgress}
+                      isGold={wi === 4}
+                    />
+                  ))}
+                </span>
+              ))}
             </h2>
 
-            <p className="font-inter text-white/50 text-lg mb-10 max-w-xl mx-auto">
+            <motion.p
+              style={{ opacity: descOpacity, skewX: descSkew, y: descY }}
+              className="font-inter text-white/50 text-lg mb-10 max-w-xl mx-auto"
+            >
               Let&apos;s turn your vision into the most beautiful celebration you&apos;ve ever experienced.
-            </p>
+            </motion.p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
