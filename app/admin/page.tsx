@@ -253,12 +253,12 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     setFormLoading(true);
     setFormError('');
 
-    const payload = {
+    const payload: Partial<Product> = {
       title: formData.title.trim(),
-      category: formData.category,
+      category: formData.category as Product['category'],
       price: Number(formData.price),
       discount: Number(formData.discount) || 0,
-      budgetTag: formData.budgetTag,
+      budgetTag: formData.budgetTag as Product['budgetTag'],
       description: formData.description.trim(),
       includes: formData.includes.filter((i) => i.trim()),
       excludes: formData.excludes.filter((i) => i.trim()),
