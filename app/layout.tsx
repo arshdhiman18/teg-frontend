@@ -5,6 +5,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import WhatsAppButton from '@/components/WhatsAppButton';
 import LenisProvider from './LenisProvider';
+import SplashScreen from '@/components/SplashScreen';
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
@@ -66,6 +67,7 @@ export default function RootLayout({
     >
       <body className="bg-light font-inter">
         <LenisProvider>
+          <SplashScreen />
           <Navbar />
           <main>{children}</main>
           <Footer />

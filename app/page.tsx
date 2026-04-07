@@ -121,7 +121,7 @@ export default function HomePage() {
           {[...Array(12)].map((_, i) => (
             <div
               key={i}
-              className={`particle bg-gold`}
+              className="particle bg-gold"
               style={{
                 width: `${Math.random() * 6 + 2}px`,
                 height: `${Math.random() * 6 + 2}px`,
@@ -280,9 +280,7 @@ export default function HomePage() {
                 transition={{ delay: i * 0.15, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
                 className={`relative bg-gradient-to-br ${card.color} rounded-3xl p-8 border border-dark/5 overflow-hidden min-h-[280px] flex flex-col justify-between`}
               >
-                {/* Big number background */}
                 <span className="number-display">{card.number}</span>
-                {/* Number badge */}
                 <div className="w-10 h-10 rounded-full bg-gold/20 border border-gold/30 flex items-center justify-center mb-6">
                   <span className="font-cormorant text-gold font-semibold text-sm">{card.number}</span>
                 </div>
@@ -417,7 +415,6 @@ export default function HomePage() {
 
       {/* ===== CTA BANNER ===== */}
       <section className="bg-dark section-padding relative overflow-hidden">
-        {/* Background elements */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(74,151,138,0.1),transparent_70%)]" />
         <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-gold/30 to-transparent" />
 
