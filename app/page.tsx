@@ -141,7 +141,7 @@ export default function HomePage() {
         {/* Hero Content */}
         <motion.div
           style={{ y: heroY, opacity: heroOpacity }}
-          className="relative z-10 text-center px-4 max-w-5xl mx-auto"
+          className="relative z-10 text-center px-4 max-w-5xl mx-auto pt-20 md:pt-0"
         >
           {/* Tag line */}
           <motion.div

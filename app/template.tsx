@@ -13,7 +13,7 @@ const MOBILE_BARS  = ['#0d1f1d', '#1F3D3A', '#509B8D', '#C6A769', '#2d6860', '#1
     30 → 86 %  HOLD   (all bars covering simultaneously for ~1 s)
     86 → 100%  exit   (easeIn, brisk)                                          */
 const KF    = ['135%', '0%', '0%', '-115%'];
-const TIMES = [0, 0.30, 0.86, 1];
+const TIMES = [0, 0.30, 0.74, 1];
 
 const DURATION        = 2.5;
 const DESKTOP_STAGGER = 0.08;

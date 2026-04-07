@@ -66,9 +66,9 @@ function CollectionsContent() {
   };
 
   return (
-    <div className="min-h-screen bg-light pt-20">
+    <div className="min-h-screen bg-light">
       {/* Header */}
-      <div className="bg-dark py-16 px-4 text-center">
+      <div className="bg-dark pt-32 pb-16 px-4 text-center">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
