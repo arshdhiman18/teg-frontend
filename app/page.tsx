@@ -2,7 +2,7 @@
 
 import { useRef } from 'react';
 import Link from 'next/link';
-import { motion, useInView, useScroll, useTransform, useMotionValue, useSpring, type MotionValue } from 'framer-motion';
+import { motion, useInView, useScroll, useTransform, type MotionValue } from 'framer-motion';
 import {
   ArrowRight,
   Sparkles,
@@ -43,12 +43,12 @@ const storyCards = [
 ];
 
 const categories = [
-  { num: '01', label: 'Birthday',    tagline: 'Turn another year into a legendary night', detail: 'Balloon arches · Neon signs · Floral walls',        href: '/collections?category=Birthday',    from: '#1a0a2e', to: '#2d1547', accent: '#e879f9',  accentBg: 'rgba(232,121,249,0.10)' },
-  { num: '02', label: 'Wedding',     tagline: 'Where forever begins',                      detail: 'Grand mandaps · Floral drapes · Fairy lights',    href: '/collections?category=Wedding',     from: '#1F3D3A', to: '#0d1f1c', accent: '#C6A769',  accentBg: 'rgba(198,167,105,0.10)' },
-  { num: '03', label: 'Anniversary', tagline: 'Celebrate years of love',                   detail: 'Intimate setups · Rose showers · Candlelight',    href: '/collections?category=Anniversary', from: '#2d1a1a', to: '#1a0d0d', accent: '#f87171',  accentBg: 'rgba(248,113,113,0.10)' },
-  { num: '04', label: 'Corporate',   tagline: 'Impress. Inspire. Elevate.',                detail: 'Brand setups · Awards nights · Team events',       href: '/collections?category=Corporate',   from: '#0f1a2e', to: '#0a1020', accent: '#60a5fa',  accentBg: 'rgba(96,165,250,0.10)'  },
-  { num: '05', label: 'Baby Shower', tagline: 'Welcome little wonders',                    detail: 'Pastel themes · Balloon clouds · Floral arches',  href: '/collections?category=Baby Shower', from: '#0d1f18', to: '#071410', accent: '#86efac',  accentBg: 'rgba(134,239,172,0.10)' },
-  { num: '06', label: 'Engagement',  tagline: 'The moment that changes everything',        detail: 'Proposal setups · Ring reveals · Petal showers',  href: '/collections?category=Engagement',  from: '#2a1a2d', to: '#1a0d1f', accent: '#c084fc',  accentBg: 'rgba(192,132,252,0.10)' },
+  { num: '01', label: 'Birthday',    tagline: 'Turn another year into a legendary night', detail: 'Balloon arches · Neon signs · Floral walls',        href: '/collections?category=Birthday',    from: '#1a0a2e', to: '#2d1547', accent: '#e879f9',  img: 'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=400&h=600&fit=crop&q=80' },
+  { num: '02', label: 'Wedding',     tagline: 'Where forever begins',                      detail: 'Grand mandaps · Floral drapes · Fairy lights',    href: '/collections?category=Wedding',     from: '#1F3D3A', to: '#0d1f1c', accent: '#C6A769',  img: 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=400&h=600&fit=crop&q=80' },
+  { num: '03', label: 'Anniversary', tagline: 'Celebrate years of love',                   detail: 'Intimate setups · Rose showers · Candlelight',    href: '/collections?category=Anniversary', from: '#2d1a1a', to: '#1a0d0d', accent: '#f87171',  img: 'https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?w=400&h=600&fit=crop&q=80' },
+  { num: '04', label: 'Corporate',   tagline: 'Impress. Inspire. Elevate.',                detail: 'Brand setups · Awards nights · Team events',       href: '/collections?category=Corporate',   from: '#0f1a2e', to: '#0a1020', accent: '#60a5fa',  img: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=600&fit=crop&q=80' },
+  { num: '05', label: 'Baby Shower', tagline: 'Welcome little wonders',                    detail: 'Pastel themes · Balloon clouds · Floral arches',  href: '/collections?category=Baby Shower', from: '#0d1f18', to: '#071410', accent: '#86efac',  img: 'https://images.unsplash.com/photo-1555252333-9f8e92e65df9?w=400&h=600&fit=crop&q=80' },
+  { num: '06', label: 'Engagement',  tagline: 'The moment that changes everything',        detail: 'Proposal setups · Ring reveals · Petal showers',  href: '/collections?category=Engagement',  from: '#2a1a2d', to: '#1a0d1f', accent: '#c084fc',  img: 'https://images.unsplash.com/photo-1529316980197-f47a2a47b758?w=400&h=600&fit=crop&q=80' },
 ];
 
 const whyTEG = [
@@ -135,22 +135,11 @@ export default function HomePage() {
   const c2Y       = useTransform(catHorizProgress, [0.07, 0.11], [48, 0]);
   const c3Opacity = useTransform(catHorizProgress, [0.11, 0.15], [0, 1]);
   const c3Y       = useTransform(catHorizProgress, [0.11, 0.15], [48, 0]);
-  // Desktop starts 1200px off right edge (500 + 700 from no CSS wrapper now).
-  // Mobile stays at 500 (just off 375px viewport). Same end value for both.
-  // All offsets baked into transform values — no CSS translate wrapper (eliminates double-transform jank).
-  const cardsXDesktop = useTransform(catHorizProgress, [0.15, 1.0], [1200, -2000]);
-  const cardsXMobile  = useTransform(catHorizProgress, [0.15, 1.0], [500,  -1800]);
-  const catTitleX     = useTransform(catHorizProgress, [0.15, 0.43], [0, -1600]);
-
-  // Mouse parallax — desktop only (spring stiffness raised, damping raised so it settles fast)
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-  const springX = useSpring(mouseX, { stiffness: 80, damping: 35 });
-  const springY = useSpring(mouseY, { stiffness: 80, damping: 35 });
-  const parallaxDeepX = useTransform(springX, [-1, 1], [16, -16]);
-  const parallaxDeepY = useTransform(springY, [-1, 1], [10, -10]);
-  const parallaxNearX = useTransform(springX, [-1, 1], [-24, 24]);
-  const parallaxNearY = useTransform(springY, [-1, 1], [-14, 14]);
+  // Single unified container — title block + cards slide together as one unit.
+  // Desktop: start with title ~centered, slide left until last card is visible.
+  // Mobile: tighter start since title is narrower.
+  const containerXDesktop = useTransform(catHorizProgress, [0.15, 1.0], [480, -1400]);
+  const containerXMobile  = useTransform(catHorizProgress, [0.15, 1.0], [40,  -2200]);
 
   // "Why Discerning Clients Choose Us" scroll-scrubbed reveal
   const whyTitleRef = useRef(null);
@@ -375,70 +364,63 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ===== FEATURED CATEGORIES — big title → horizontal cards ===== */}
+      {/* ===== FEATURED CATEGORIES — unified title + cards slide as one container ===== */}
       <div
         ref={catHorizRef}
         className="relative bg-dark"
         style={{ height: 'calc(100vh + 3200px)' }}
       >
-        <div
-          className="sticky top-0 h-screen overflow-hidden"
-          onMouseMove={(e) => {
-            if (window.matchMedia('(hover: none)').matches) return;
-            const r = e.currentTarget.getBoundingClientRect();
-            mouseX.set((e.clientX - r.left) / r.width * 2 - 1);
-            mouseY.set((e.clientY - r.top) / r.height * 2 - 1);
-          }}
-          onMouseLeave={() => { mouseX.set(0); mouseY.set(0); }}
-        >
+        <div className="sticky top-0 h-screen overflow-hidden">
           {/* Ambient glow */}
           <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 70% 50% at 30% 50%, rgba(74,151,138,0.06) 0%, transparent 70%)' }} />
 
-          {/* BIG centered title — reveals word by word, then shrinks+fades away */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ paddingTop: '80px' }}>
-            <motion.div
-              style={{ x: catTitleX }}
-              className="text-center px-6"
-            >
-              <motion.p
-                className="font-inter text-xs text-primary tracking-widest uppercase mb-4"
-                style={{ opacity: c0Opacity, y: c0Y }}
-              >
-                Browse by Occasion
-              </motion.p>
-              <h2 className="font-cormorant font-light text-white leading-[1.05]" style={{ fontSize: 'clamp(3.2rem, 7vw, 7rem)' }}>
-                <motion.span style={{ display: 'inline-block', marginRight: '0.28em', opacity: c1Opacity, y: c1Y }}>Every</motion.span>
-                <motion.span style={{ display: 'inline-block', marginRight: '0.28em', opacity: c2Opacity, y: c2Y }}>Celebration</motion.span>
-                <br />
-                <motion.span style={{ display: 'inline-block', marginRight: '0.28em', opacity: c3Opacity, y: c3Y }}>Deserves</motion.span>
-                <motion.span style={{ display: 'inline-block', opacity: c3Opacity, y: c3Y }} className="text-gold font-medium">Magic</motion.span>
-              </h2>
-            </motion.div>
-          </div>
-
-          {/* Cards — desktop track */}
+          {/* Desktop — unified sliding container */}
           <div className="hidden md:flex absolute inset-0 items-center" style={{ paddingTop: '80px' }}>
             <motion.div
-              className="flex gap-6 pl-14 pr-14"
-              style={{ x: cardsXDesktop, willChange: 'transform' }}
+              className="flex items-center gap-16 pl-16"
+              style={{ x: containerXDesktop, willChange: 'transform' }}
             >
+              {/* Title block */}
+              <div className="flex-shrink-0">
+                <motion.p
+                  className="font-inter text-xs text-primary tracking-widest uppercase mb-4"
+                  style={{ opacity: c0Opacity, y: c0Y }}
+                >
+                  Browse by Occasion
+                </motion.p>
+                <h2 className="font-cormorant font-light text-white leading-[1.1]" style={{ fontSize: 'clamp(2.8rem, 4vw, 4.8rem)' }}>
+                  <span style={{ display: 'block', whiteSpace: 'nowrap' }}>
+                    <motion.span style={{ display: 'inline-block', marginRight: '0.28em', opacity: c1Opacity, y: c1Y }}>Every</motion.span>
+                    <motion.span style={{ display: 'inline-block', opacity: c2Opacity, y: c2Y }}>Celebration</motion.span>
+                  </span>
+                  <span style={{ display: 'block', whiteSpace: 'nowrap' }}>
+                    <motion.span style={{ display: 'inline-block', marginRight: '0.28em', opacity: c3Opacity, y: c3Y }}>Deserves</motion.span>
+                    <motion.span style={{ display: 'inline-block', opacity: c3Opacity, y: c3Y }} className="text-gold font-medium">Magic</motion.span>
+                  </span>
+                </h2>
+              </div>
+
+              {/* Cards */}
               {categories.map((cat, i) => (
                 <Link key={i} href={cat.href} className="flex-shrink-0">
                   <motion.div
                     className="relative overflow-hidden rounded-2xl cursor-pointer group"
-                    style={{ width: '280px', height: 'clamp(380px, 58vh, 520px)', background: `linear-gradient(155deg, ${cat.from}, ${cat.to})` }}
+                    style={{ width: '270px', height: 'clamp(380px, 58vh, 520px)' }}
                     whileHover={{ scale: 1.02, y: -6 }}
                     transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                   >
-                    {/* Deep parallax orbs — desktop only */}
-                    <motion.div className="absolute rounded-full pointer-events-none" style={{ width: '240px', height: '240px', background: `radial-gradient(circle, ${cat.accentBg} 0%, transparent 70%)`, top: '-40px', right: '-50px', x: parallaxDeepX, y: parallaxDeepY }} />
-                    <motion.div className="absolute rounded-full pointer-events-none" style={{ width: '130px', height: '130px', background: `radial-gradient(circle, ${cat.accentBg} 0%, transparent 70%)`, bottom: '90px', left: '-25px', x: parallaxDeepX, y: parallaxDeepY }} />
-                    {/* Near particles — desktop only, reduced to 2 */}
-                    <motion.div className="absolute rounded-full pointer-events-none" style={{ width: '6px', height: '6px', background: cat.accent, top: '26%', left: '20%', x: parallaxNearX, y: parallaxNearY, opacity: 0.6 }} />
-                    <motion.div className="absolute rounded-full pointer-events-none" style={{ width: '4px', height: '4px', background: cat.accent, top: '50%', right: '18%', x: parallaxNearX, y: parallaxNearY, opacity: 0.35 }} />
+                    {/* Photo */}
+                    <img
+                      src={cat.img}
+                      alt={cat.label}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                    {/* Gradient overlay */}
+                    <div className="absolute inset-0" style={{ background: `linear-gradient(155deg, ${cat.from}cc, ${cat.to}dd)` }} />
 
                     {/* Watermark number */}
-                    <div className="absolute top-5 left-6 font-cormorant leading-none select-none pointer-events-none" style={{ fontSize: 'clamp(4.5rem, 7vw, 6.5rem)', fontWeight: 300, color: 'rgba(255,255,255,0.05)' }}>
+                    <div className="absolute top-5 left-6 font-cormorant leading-none select-none pointer-events-none" style={{ fontSize: 'clamp(4.5rem, 7vw, 6.5rem)', fontWeight: 300, color: 'rgba(255,255,255,0.07)' }}>
                       {cat.num}
                     </div>
 
@@ -446,7 +428,7 @@ export default function HomePage() {
                     <div className="absolute top-0 left-6 right-6 h-px" style={{ background: `linear-gradient(90deg, transparent, ${cat.accent}60, transparent)` }} />
 
                     {/* Content */}
-                    <div className="absolute bottom-0 left-0 right-0 p-6" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.82) 0%, transparent 100%)' }}>
+                    <div className="absolute bottom-0 left-0 right-0 p-6" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.88) 0%, transparent 100%)' }}>
                       <p className="font-inter text-[9px] tracking-[0.2em] uppercase mb-2.5 leading-relaxed" style={{ color: cat.accent, opacity: 0.85 }}>
                         {cat.detail}
                       </p>
@@ -470,28 +452,53 @@ export default function HomePage() {
             </motion.div>
           </div>
 
-          {/* Cards — mobile track (no parallax, no hover, static orbs) */}
+          {/* Mobile — unified sliding container */}
           <div className="flex md:hidden absolute inset-0 items-center" style={{ paddingTop: '80px' }}>
             <motion.div
-              className="flex gap-4 pl-4 pr-4"
-              style={{ x: cardsXMobile, willChange: 'transform' }}
+              className="flex items-center gap-8 pl-6"
+              style={{ x: containerXMobile, willChange: 'transform' }}
             >
+              {/* Title block */}
+              <div className="flex-shrink-0">
+                <motion.p
+                  className="font-inter text-xs text-primary tracking-widest uppercase mb-3"
+                  style={{ opacity: c0Opacity, y: c0Y }}
+                >
+                  Browse by Occasion
+                </motion.p>
+                <h2 className="font-cormorant font-light text-white leading-[1.1]" style={{ fontSize: '2rem' }}>
+                  <span style={{ display: 'block', whiteSpace: 'nowrap' }}>
+                    <motion.span style={{ display: 'inline-block', marginRight: '0.28em', opacity: c1Opacity, y: c1Y }}>Every</motion.span>
+                    <motion.span style={{ display: 'inline-block', opacity: c2Opacity, y: c2Y }}>Celebration</motion.span>
+                  </span>
+                  <span style={{ display: 'block', whiteSpace: 'nowrap' }}>
+                    <motion.span style={{ display: 'inline-block', marginRight: '0.28em', opacity: c3Opacity, y: c3Y }}>Deserves</motion.span>
+                    <motion.span style={{ display: 'inline-block', opacity: c3Opacity, y: c3Y }} className="text-gold font-medium">Magic</motion.span>
+                  </span>
+                </h2>
+              </div>
+
+              {/* Cards */}
               {categories.map((cat, i) => (
                 <Link key={i} href={cat.href} className="flex-shrink-0">
                   <div
-                    className="relative overflow-hidden rounded-2xl w-[88vw]"
-                    style={{ height: 'clamp(360px, 55vh, 480px)', background: `linear-gradient(155deg, ${cat.from}, ${cat.to})` }}
+                    className="relative overflow-hidden rounded-2xl w-[82vw]"
+                    style={{ height: 'clamp(360px, 55vh, 480px)' }}
                   >
-                    {/* Static orbs — no motion, no springs */}
-                    <div className="absolute rounded-full pointer-events-none" style={{ width: '220px', height: '220px', background: `radial-gradient(circle, ${cat.accentBg} 0%, transparent 70%)`, top: '-40px', right: '-50px' }} />
-                    <div className="absolute rounded-full pointer-events-none" style={{ width: '110px', height: '110px', background: `radial-gradient(circle, ${cat.accentBg} 0%, transparent 70%)`, bottom: '80px', left: '-25px' }} />
-                    {/* Static dot accent */}
-                    <div className="absolute rounded-full pointer-events-none" style={{ width: '6px', height: '6px', background: cat.accent, top: '26%', left: '20%', opacity: 0.5 }} />
-                    <div className="absolute rounded-full pointer-events-none" style={{ width: '4px', height: '4px', background: cat.accent, top: '50%', right: '18%', opacity: 0.3 }} />
+                    {/* Photo */}
+                    <img
+                      src={cat.img}
+                      alt={cat.label}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                    {/* Gradient overlay */}
+                    <div className="absolute inset-0" style={{ background: `linear-gradient(155deg, ${cat.from}cc, ${cat.to}dd)` }} />
+
                     {/* Watermark number */}
-                    <div className="absolute top-5 left-6 font-cormorant leading-none select-none pointer-events-none" style={{ fontSize: '5.5rem', fontWeight: 300, color: 'rgba(255,255,255,0.05)' }}>{cat.num}</div>
+                    <div className="absolute top-5 left-6 font-cormorant leading-none select-none pointer-events-none" style={{ fontSize: '5.5rem', fontWeight: 300, color: 'rgba(255,255,255,0.07)' }}>{cat.num}</div>
                     <div className="absolute top-0 left-6 right-6 h-px" style={{ background: `linear-gradient(90deg, transparent, ${cat.accent}60, transparent)` }} />
-                    <div className="absolute bottom-0 left-0 right-0 p-6" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.82) 0%, transparent 100%)' }}>
+                    <div className="absolute bottom-0 left-0 right-0 p-6" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.88) 0%, transparent 100%)' }}>
                       <p className="font-inter text-[9px] tracking-[0.2em] uppercase mb-2.5" style={{ color: cat.accent, opacity: 0.85 }}>{cat.detail}</p>
                       <h3 className="font-cormorant text-white leading-none mb-2" style={{ fontSize: '2.4rem', fontWeight: 300 }}>{cat.label}</h3>
                       <p className="font-inter text-xs text-white/40 mb-5 leading-relaxed">{cat.tagline}</p>
