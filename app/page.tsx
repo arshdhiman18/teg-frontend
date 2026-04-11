@@ -48,7 +48,7 @@ const categories = [
   { num: '03', label: 'Anniversary', tagline: 'Celebrate years of love',                   detail: 'Intimate setups · Rose showers · Candlelight',    href: '/collections?category=Anniversary', from: '#2d1a1a', to: '#1a0d0d', accent: '#f87171',  img: 'https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?w=400&h=600&fit=crop&q=80' },
   { num: '04', label: 'Corporate',   tagline: 'Impress. Inspire. Elevate.',                detail: 'Brand setups · Awards nights · Team events',       href: '/collections?category=Corporate',   from: '#0f1a2e', to: '#0a1020', accent: '#60a5fa',  img: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=600&fit=crop&q=80' },
   { num: '05', label: 'Baby Shower', tagline: 'Welcome little wonders',                    detail: 'Pastel themes · Balloon clouds · Floral arches',  href: '/collections?category=Baby Shower', from: '#0d1f18', to: '#071410', accent: '#86efac',  img: 'https://images.unsplash.com/photo-1555252333-9f8e92e65df9?w=400&h=600&fit=crop&q=80' },
-  { num: '06', label: 'Engagement',  tagline: 'The moment that changes everything',        detail: 'Proposal setups · Ring reveals · Petal showers',  href: '/collections?category=Engagement',  from: '#2a1a2d', to: '#1a0d1f', accent: '#c084fc',  img: 'https://images.unsplash.com/photo-1529316980197-f47a2a47b758?w=400&h=600&fit=crop&q=80' },
+  { num: '06', label: 'Engagement',  tagline: 'The moment that changes everything',        detail: 'Proposal setups · Ring reveals · Petal showers',  href: '/collections?category=Engagement',  from: '#2a1a2d', to: '#1a0d1f', accent: '#c084fc',  img: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=400&h=600&fit=crop&q=80' },
 ];
 
 const whyTEG = [
@@ -417,7 +417,7 @@ export default function HomePage() {
                       loading="lazy"
                     />
                     {/* Gradient overlay */}
-                    <div className="absolute inset-0" style={{ background: `linear-gradient(155deg, ${cat.from}cc, ${cat.to}dd)` }} />
+                    <div className="absolute inset-0" style={{ background: `linear-gradient(155deg, ${cat.from}88, ${cat.to}aa)` }} />
 
                     {/* Watermark number */}
                     <div className="absolute top-5 left-6 font-cormorant leading-none select-none pointer-events-none" style={{ fontSize: 'clamp(4.5rem, 7vw, 6.5rem)', fontWeight: 300, color: 'rgba(255,255,255,0.07)' }}>
@@ -493,7 +493,7 @@ export default function HomePage() {
                       loading="lazy"
                     />
                     {/* Gradient overlay */}
-                    <div className="absolute inset-0" style={{ background: `linear-gradient(155deg, ${cat.from}cc, ${cat.to}dd)` }} />
+                    <div className="absolute inset-0" style={{ background: `linear-gradient(155deg, ${cat.from}88, ${cat.to}aa)` }} />
 
                     {/* Watermark number */}
                     <div className="absolute top-5 left-6 font-cormorant leading-none select-none pointer-events-none" style={{ fontSize: '5.5rem', fontWeight: 300, color: 'rgba(255,255,255,0.07)' }}>{cat.num}</div>
