@@ -83,7 +83,7 @@ export default function AdminPage() {
 
   if (!authed) {
     return (
-      <div className="min-h-screen bg-dark flex items-center justify-center px-4 pt-16">
+      <div className="min-h-screen bg-dark flex items-center justify-center px-4">
         <motion.div
           initial={{ opacity: 0, y: 30, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -297,7 +297,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   };
 
   return (
-    <div className="min-h-screen bg-light pt-16">
+    <div className="min-h-screen bg-light">
       {/* Success Toast */}
       <AnimatePresence>
         {successMsg && (

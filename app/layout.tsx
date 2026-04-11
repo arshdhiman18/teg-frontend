@@ -1,8 +1,7 @@
 import type { Metadata } from 'next';
 import { Playfair_Display, Cormorant_Garamond, Inter } from 'next/font/google';
 import './globals.css';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
+import ConditionalLayout from '@/components/ConditionalLayout';
 import LenisProvider from './LenisProvider';
 import SplashScreen from '@/components/SplashScreen';
 
@@ -67,9 +66,7 @@ export default function RootLayout({
       <body className="bg-light font-inter">
         <LenisProvider>
           <SplashScreen />
-          <Navbar />
-          <main>{children}</main>
-          <Footer />
+          <ConditionalLayout>{children}</ConditionalLayout>
         </LenisProvider>
       </body>
     </html>

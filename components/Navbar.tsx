@@ -79,12 +79,6 @@ export default function Navbar() {
                   />
                 </Link>
               ))}
-              <Link
-                href="/admin"
-                className="font-inter text-xs text-white/30 hover:text-white/60 transition-colors duration-300 tracking-widest uppercase border border-white/10 hover:border-white/20 px-3 py-1.5 rounded-full"
-              >
-                Admin
-              </Link>
             </nav>
 
             {/* Mobile Hamburger */}
@@ -127,18 +121,6 @@ export default function Navbar() {
                   </Link>
                 </motion.div>
               ))}
-              <motion.div
-                initial={{ opacity: 0, x: 30 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4 }}
-              >
-                <Link
-                  href="/admin"
-                  className="font-inter text-sm text-white/30 hover:text-white/60 transition-colors"
-                >
-                  Admin Panel
-                </Link>
-              </motion.div>
             </nav>
 
             <div className="mt-auto mb-12">
