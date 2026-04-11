@@ -514,10 +514,15 @@ export default function HomePage() {
           </div>
 
           {/* Scroll hint */}
-          <div className="absolute bottom-7 right-8 md:right-14 flex items-center gap-2 pointer-events-none" style={{ color: 'rgba(255,255,255,0.18)' }}>
+          <motion.div
+            className="absolute bottom-7 right-8 md:right-14 flex items-center gap-2 pointer-events-none"
+            style={{ color: 'rgba(255,255,255,0.18)' }}
+            animate={{ y: [0, -6, 0] }}
+            transition={{ duration: 2.4, ease: 'easeInOut', repeat: Infinity }}
+          >
             <span className="font-inter text-[9px] tracking-widest uppercase">Scroll to explore</span>
             <ArrowRight className="w-3 h-3" />
-          </div>
+          </motion.div>
         </div>
       </div>
 
