@@ -305,7 +305,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             initial={{ opacity: 0, y: -50 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -50 }}
-            className="fixed top-20 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-green-500 text-white px-5 py-3 rounded-full shadow-lg font-inter text-sm"
+            className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-green-500 text-white px-5 py-3 rounded-full shadow-lg font-inter text-sm"
           >
             <Check className="w-4 h-4" />
             {successMsg}
@@ -314,7 +314,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       </AnimatePresence>
 
       {/* Admin Header */}
-      <div className="bg-dark border-b border-white/10 sticky top-16 z-30">
+      <div className="bg-dark border-b border-white/10 sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <LayoutDashboard className="w-5 h-5 text-gold" />

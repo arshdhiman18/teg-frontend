@@ -1,14 +1,15 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
-import { motion, useInView, useScroll, useTransform, type MotionValue } from 'framer-motion';
+import { motion, AnimatePresence, useInView, useScroll, useTransform, type MotionValue } from 'framer-motion';
 import {
   ArrowRight,
   Sparkles,
   Shield,
   IndianRupee,
   Star,
+  X,
 } from 'lucide-react';
 
 const storyCards = [
@@ -152,6 +153,18 @@ export default function HomePage() {
   const y2Y       = useTransform(whyProgress, [0.44, 0.64], [48, 0]);
   const y3Opacity = useTransform(whyProgress, [0.66, 0.86], [0, 1]);
   const y3Y       = useTransform(whyProgress, [0.66, 0.86], [48, 0]);
+
+  // Video showcase — scroll-scrubbed circle mask expand
+  const [videoModal, setVideoModal] = useState(false);
+  const videoSectionRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress: videoProgress } = useScroll({
+    target: videoSectionRef,
+    offset: ['start start', 'end end'],
+  });
+  const maskPct = useTransform(videoProgress, [0.05, 0.88], [12, 152]);
+  const videoClipPath = useTransform(maskPct, (v) => `circle(${v.toFixed(2)}% at 50% 62%)`);
+  const videoTitleOpacity = useTransform(videoProgress, [0, 0.2], [1, 0]);
+  const videoTitleY = useTransform(videoProgress, [0, 0.2], [0, -28]);
 
   // "Ready to Create Something Extraordinary?" — letter-by-letter color scrub
   // Words: Ready(5) to(2) Create(6) Something(9) Extraordinary?(14) = 36 letters total
@@ -565,6 +578,167 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ===== VIDEO SHOWCASE ===== */}
+      <div
+        ref={videoSectionRef}
+        className="relative"
+        style={{ height: 'calc(100vh + 500px)', background: '#060e0c' }}
+      >
+        <div
+          className="sticky top-0 h-screen overflow-hidden"
+          style={{ background: '#060e0c' }}
+        >
+          {/* Ambient gold glow */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{ background: 'radial-gradient(ellipse 60% 60% at 50% 50%, rgba(198,167,105,0.06) 0%, transparent 70%)' }}
+          />
+
+          {/* Title — absolute, upper area, fades out on scroll */}
+          <motion.div
+            className="absolute left-0 right-0 text-center px-4 z-20 pointer-events-none"
+            style={{ top: '22%', opacity: videoTitleOpacity, y: videoTitleY }}
+          >
+            <p className="font-inter text-xs text-gold tracking-widest uppercase mb-4">
+              Behind the Magic
+            </p>
+            <h2
+              className="font-cormorant font-light text-white leading-[1.05]"
+              style={{ fontSize: 'clamp(2.6rem, 5vw, 5.5rem)' }}
+            >
+              See What{' '}
+              <span className="text-gold font-medium">We Create</span>
+            </h2>
+          </motion.div>
+
+          {/* Video layer — clips to expanding circle anchored at dead center */}
+          <motion.div
+            className="absolute inset-0"
+            style={{ clipPath: videoClipPath }}
+          >
+            <video
+              src="https://res.cloudinary.com/dww36nzdv/video/upload/Teg-Section_vmiiap.mp4"
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            <div className="absolute inset-0" style={{ background: 'rgba(6,14,12,0.2)' }} />
+          </motion.div>
+
+          {/* Play button — matches clip-path anchor (50% 62%) */}
+          <button
+            onClick={() => setVideoModal(true)}
+            className="absolute top-[62%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 group"
+            style={{ width: 'clamp(120px, 15vw, 156px)', height: 'clamp(120px, 15vw, 156px)' }}
+            aria-label="Play video"
+          >
+            {/* Rotating "PLAY VIDEO ·" ring */}
+            <motion.svg
+              viewBox="0 0 100 100"
+              className="absolute inset-0 w-full h-full"
+              style={{ overflow: 'visible' }}
+              animate={{ rotate: 360 }}
+              transition={{ duration: 12, ease: 'linear', repeat: Infinity }}
+            >
+              <defs>
+                <path
+                  id="vid-ring"
+                  d="M50,50 m-45,0 a45,45 0 1,1 90,0 a45,45 0 1,1 -90,0"
+                />
+              </defs>
+              <text
+                style={{
+                  fontSize: '9px',
+                  letterSpacing: '0.3em',
+                  fontFamily: 'sans-serif',
+                  fontWeight: 500,
+                  textTransform: 'uppercase',
+                }}
+                fill="rgba(255,255,255,0.85)"
+              >
+                <textPath href="#vid-ring">
+                  PLAY VIDEO · PLAY VIDEO · PLAY VIDEO ·
+                </textPath>
+              </text>
+            </motion.svg>
+
+            {/* Frosted glass play circle — smaller so text ring has room */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div
+                className="rounded-full flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:bg-white/20"
+                style={{
+                  width: '40%', height: '40%',
+                  background: 'rgba(255,255,255,0.12)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255,255,255,0.3)',
+                  boxShadow: '0 0 32px rgba(198,167,105,0.18)',
+                }}
+              >
+                <div
+                  className="ml-[8%]"
+                  style={{
+                    width: 0, height: 0,
+                    borderTop: '7px solid transparent',
+                    borderBottom: '7px solid transparent',
+                    borderLeft: '13px solid white',
+                  }}
+                />
+              </div>
+            </div>
+          </button>
+
+          {/* Scroll hint */}
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 pointer-events-none">
+            <p className="font-inter text-[9px] tracking-widest uppercase text-center" style={{ color: 'rgba(255,255,255,0.18)' }}>
+              Scroll to reveal
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Video Modal */}
+      <AnimatePresence>
+        {videoModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-4 md:p-10"
+            style={{ background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(14px)' }}
+            onClick={(e) => { if (e.target === e.currentTarget) setVideoModal(false); }}
+          >
+            <motion.div
+              initial={{ scale: 0.88, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.88, opacity: 0 }}
+              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+              className="relative w-full max-w-4xl rounded-2xl overflow-hidden"
+              style={{ aspectRatio: '16/9', boxShadow: '0 40px 100px rgba(0,0,0,0.7)' }}
+            >
+              <iframe
+                src="https://player.cloudinary.com/embed/?cloud_name=dww36nzdv&public_id=Teg-Section_vmiiap&autoplay=true&controls=true"
+                className="absolute inset-0 w-full h-full"
+                allow="autoplay; fullscreen; encrypted-media"
+                allowFullScreen
+              />
+            </motion.div>
+
+            {/* Close */}
+            <button
+              onClick={() => setVideoModal(false)}
+              className="absolute top-5 right-5 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110"
+              style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.18)' }}
+            >
+              <X className="w-5 h-5 text-white" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ===== TESTIMONIAL STRIP ===== */}
       <section className="bg-white py-12 overflow-hidden border-y border-light">
