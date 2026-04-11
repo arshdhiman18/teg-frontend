@@ -138,7 +138,7 @@ export default function HomePage() {
   // Single unified container — title block + cards slide together as one unit.
   // Desktop: start with title ~centered, slide left until last card is visible.
   // Mobile: tighter start since title is narrower.
-  const containerXDesktop = useTransform(catHorizProgress, [0.15, 1.0], [480, -1400]);
+  const containerXDesktop = useTransform(catHorizProgress, [0.15, 1.0], [80, -1300]);
   const containerXMobile  = useTransform(catHorizProgress, [0.15, 1.0], [40,  -2200]);
 
   // "Why Discerning Clients Choose Us" scroll-scrubbed reveal
@@ -368,7 +368,7 @@ export default function HomePage() {
       <div
         ref={catHorizRef}
         className="relative bg-dark"
-        style={{ height: 'calc(100vh + 3200px)' }}
+        style={{ height: 'calc(100vh + 2000px)' }}
       >
         <div className="sticky top-0 h-screen overflow-hidden">
           {/* Ambient glow */}
