@@ -18,8 +18,9 @@ import {
   Upload,
   Eye,
   LogOut,
-  ChevronDown,
   AlertTriangle,
+  Database,
+  RefreshCw,
 } from 'lucide-react';
 import {
   getProducts,
@@ -30,13 +31,20 @@ import {
   formatPrice,
   Product,
 } from '@/lib/api';
-
-const CATEGORIES = ['Birthday', 'Wedding', 'Anniversary', 'Corporate', 'Baby Shower', 'Engagement', 'Other'];
-const BUDGET_TAGS = ['Pocket', 'Premium', 'Luxury'];
+import {
+  SECTIONS,
+  CATEGORY_STRUCTURE,
+  GENDER_OPTIONS,
+  BUDGET_TAGS,
+  getSubCategories,
+} from '@/lib/categories';
 
 const emptyForm = {
   title: '',
+  section: '',
   category: '',
+  subCategory: '',
+  gender: 'Unisex' as string,
   price: '',
   discount: '0',
   budgetTag: '',
@@ -47,18 +55,15 @@ const emptyForm = {
   images: [] as string[],
 };
 
+// ── Auth screen ────────────────────────────────────────────────────────────
 export default function AdminPage() {
   const [authed, setAuthed] = useState(false);
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
 
-  // Check localStorage on mount
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('teg_admin_auth');
-      if (stored === 'true') setAuthed(true);
-    }
+    if (typeof window !== 'undefined' && localStorage.getItem('teg_admin_auth') === 'true') setAuthed(true);
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -98,12 +103,9 @@ export default function AdminPage() {
               <h1 className="font-playfair text-2xl font-bold text-dark mb-1">Admin Panel</h1>
               <p className="font-inter text-sm text-dark/50">The Event Gardener — Internal Portal</p>
             </div>
-
             <form onSubmit={handleLogin} className="space-y-5">
               <div>
-                <label className="block text-xs font-inter font-medium text-dark/60 uppercase tracking-wide mb-2">
-                  Admin Password
-                </label>
+                <label className="block text-xs font-inter font-medium text-dark/60 uppercase tracking-wide mb-2">Admin Password</label>
                 <input
                   type="password"
                   value={password}
@@ -113,18 +115,12 @@ export default function AdminPage() {
                   autoFocus
                 />
               </div>
-
               {authError && (
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="text-red-500 text-xs font-inter flex items-center gap-1.5"
-                >
+                <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-red-500 text-xs font-inter flex items-center gap-1.5">
                   <AlertTriangle className="w-3.5 h-3.5" />
                   {authError}
                 </motion.p>
               )}
-
               <button
                 type="submit"
                 disabled={authLoading || !password}
@@ -134,10 +130,7 @@ export default function AdminPage() {
                 {authLoading ? 'Verifying...' : 'Sign In'}
               </button>
             </form>
-
-            <p className="text-center text-xs font-inter text-dark/30 mt-6">
-              Default password: teg-admin-2024
-            </p>
+            <p className="text-center text-xs font-inter text-dark/30 mt-6">Default password: teg-admin-2024</p>
           </div>
         </motion.div>
       </div>
@@ -147,6 +140,7 @@ export default function AdminPage() {
   return <AdminDashboard onLogout={handleLogout} />;
 }
 
+// ── Dashboard ──────────────────────────────────────────────────────────────
 function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -160,9 +154,20 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [successMsg, setSuccessMsg] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [seedLoading, setSeedLoading] = useState(false);
+  const [showSeedConfirm, setShowSeedConfirm] = useState(false);
+
+  useEffect(() => { fetchProducts(); }, []);
+
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    const open = showForm || !!deleteConfirm || showSeedConfirm;
+    document.documentElement.style.overflow = open ? 'hidden' : '';
+    document.body.style.overflow = open ? 'hidden' : '';
+    return () => {
+      document.documentElement.style.overflow = '';
+      document.body.style.overflow = '';
+    };
+  }, [showForm, deleteConfirm, showSeedConfirm]);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -173,6 +178,33 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       console.error(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const showSuccess = (msg: string) => {
+    setSuccessMsg(msg);
+    setTimeout(() => setSuccessMsg(''), 3000);
+  };
+
+  const handleSeed = async () => {
+    setSeedLoading(true);
+    setShowSeedConfirm(false);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/seed`, {
+        method: 'POST',
+        headers: { 'x-admin-key': 'teg-admin-2024' },
+      });
+      const data = await res.json();
+      if (data.success) {
+        showSuccess(`Seeded ${data.data?.length ?? 0} demo products`);
+        fetchProducts();
+      } else {
+        alert('Seed failed: ' + data.message);
+      }
+    } catch (err: any) {
+      alert('Seed error: ' + err.message);
+    } finally {
+      setSeedLoading(false);
     }
   };
 
@@ -187,7 +219,10 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     setEditingProduct(product);
     setFormData({
       title: product.title,
+      section: product.section || '',
       category: product.category,
+      subCategory: product.subCategory || '',
+      gender: product.gender || 'Unisex',
       price: String(product.price),
       discount: String(product.discount || 0),
       budgetTag: product.budgetTag,
@@ -225,37 +260,28 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     }
   };
 
-  const removeImage = (index: number) => {
+  const removeImage = (index: number) =>
     setFormData((prev) => ({ ...prev, images: prev.images.filter((_, i) => i !== index) }));
-  };
 
-  const addListItem = (field: 'includes' | 'excludes') => {
+  const addListItem = (field: 'includes' | 'excludes') =>
     setFormData((prev) => ({ ...prev, [field]: [...prev[field], ''] }));
-  };
 
-  const updateListItem = (field: 'includes' | 'excludes', index: number, value: string) => {
-    setFormData((prev) => {
-      const arr = [...prev[field]];
-      arr[index] = value;
-      return { ...prev, [field]: arr };
-    });
-  };
+  const updateListItem = (field: 'includes' | 'excludes', index: number, value: string) =>
+    setFormData((prev) => { const arr = [...prev[field]]; arr[index] = value; return { ...prev, [field]: arr }; });
 
-  const removeListItem = (field: 'includes' | 'excludes', index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: prev[field].filter((_, i) => i !== index),
-    }));
-  };
+  const removeListItem = (field: 'includes' | 'excludes', index: number) =>
+    setFormData((prev) => ({ ...prev, [field]: prev[field].filter((_, i) => i !== index) }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormLoading(true);
     setFormError('');
-
     const payload: Partial<Product> = {
       title: formData.title.trim(),
-      category: formData.category as Product['category'],
+      section: formData.section as Product['section'] || undefined,
+      category: formData.category,
+      subCategory: formData.subCategory || undefined,
+      gender: formData.gender as Product['gender'],
       price: Number(formData.price),
       discount: Number(formData.discount) || 0,
       budgetTag: formData.budgetTag as Product['budgetTag'],
@@ -265,7 +291,6 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       featured: formData.featured,
       images: formData.images,
     };
-
     try {
       if (editingProduct) {
         const res = await updateProduct(editingProduct._id, payload);
@@ -284,21 +309,22 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     }
   };
 
-  const showSuccess = (msg: string) => {
-    setSuccessMsg(msg);
-    setTimeout(() => setSuccessMsg(''), 3000);
-  };
-
-  // Stats
   const stats = {
     total: products.length,
-    categories: products.map((p) => p.category).filter((v, i, a) => a.indexOf(v) === i).length,
+    sections: products.filter((p) => p.section).map((p) => p.section).filter((v, i, a) => a.indexOf(v) === i).length,
     featured: products.filter((p) => p.featured).length,
   };
 
+  // Dynamic subcategories based on current form selection
+  const availableCategories = formData.section
+    ? Object.keys(CATEGORY_STRUCTURE[formData.section as keyof typeof CATEGORY_STRUCTURE] || {})
+    : Object.values(CATEGORY_STRUCTURE).flatMap((cats) => Object.keys(cats));
+
+  const availableSubCategories = getSubCategories(formData.category);
+
   return (
     <div className="min-h-screen bg-light">
-      {/* Success Toast */}
+      {/* Toast */}
       <AnimatePresence>
         {successMsg && (
           <motion.div
@@ -313,7 +339,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         )}
       </AnimatePresence>
 
-      {/* Admin Header */}
+      {/* Header */}
       <div className="bg-dark border-b border-white/10 sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -331,11 +357,36 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        {/* Stats Cards */}
+        {/* Seed demo data banner (shown when DB is empty) */}
+        {!loading && products.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-gold/10 border border-gold/30 rounded-2xl px-5 py-4 flex items-center justify-between gap-4 mb-6"
+          >
+            <div className="flex items-center gap-3">
+              <Database className="w-5 h-5 text-gold shrink-0" />
+              <div>
+                <p className="font-inter font-semibold text-sm text-dark">No products yet</p>
+                <p className="font-inter text-xs text-dark/50">Load 18 demo products to preview the platform</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowSeedConfirm(true)}
+              disabled={seedLoading}
+              className="flex items-center gap-2 btn-gold text-dark font-inter font-medium text-xs px-4 py-2.5 rounded-xl whitespace-nowrap"
+            >
+              {seedLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Database className="w-3.5 h-3.5" />}
+              Seed Demo Data
+            </button>
+          </motion.div>
+        )}
+
+        {/* Stats */}
         <div className="grid grid-cols-3 gap-4 mb-8">
           {[
             { label: 'Total Products', value: stats.total, icon: Package, color: 'bg-primary/10 text-primary' },
-            { label: 'Categories', value: stats.categories, icon: LayoutDashboard, color: 'bg-gold/10 text-gold' },
+            { label: 'Sections Active', value: stats.sections, icon: LayoutDashboard, color: 'bg-gold/10 text-gold' },
             { label: 'Featured', value: stats.featured, icon: Star, color: 'bg-yellow-50 text-yellow-600' },
           ].map((stat, i) => {
             const Icon = stat.icon;
@@ -351,17 +402,28 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           })}
         </div>
 
-        {/* Products Section */}
+        {/* Products table */}
         <div className="bg-white rounded-3xl shadow-luxury overflow-hidden">
           <div className="flex items-center justify-between px-6 py-5 border-b border-dark/5">
             <h2 className="font-playfair text-xl font-semibold text-dark">Products</h2>
-            <button
-              onClick={openAddForm}
-              className="flex items-center gap-2 btn-gold text-dark font-inter font-medium text-sm px-4 py-2.5 rounded-xl"
-            >
-              <Plus className="w-4 h-4" />
-              Add Product
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowSeedConfirm(true)}
+                disabled={seedLoading}
+                title="Reset & load demo products"
+                className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl border border-dark/10 text-dark/40 hover:text-gold hover:border-gold/30 hover:bg-gold/5 font-inter text-xs transition-all"
+              >
+                {seedLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+                Seed Demo
+              </button>
+              <button
+                onClick={openAddForm}
+                className="flex items-center gap-2 btn-gold text-dark font-inter font-medium text-sm px-4 py-2.5 rounded-xl"
+              >
+                <Plus className="w-4 h-4" />
+                Add Product
+              </button>
+            </div>
           </div>
 
           {loading ? (
@@ -372,9 +434,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             <div className="text-center py-16">
               <Package className="w-12 h-12 text-dark/20 mx-auto mb-4" />
               <p className="font-inter text-dark/50 mb-4">No products yet</p>
-              <button onClick={openAddForm} className="text-primary font-inter text-sm hover:underline">
-                Add your first product
-              </button>
+              <button onClick={openAddForm} className="text-primary font-inter text-sm hover:underline">Add your first product</button>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -383,6 +443,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   <tr className="border-b border-dark/5">
                     <th className="text-left px-6 py-3 text-xs font-inter font-semibold text-dark/40 uppercase tracking-wide">Product</th>
                     <th className="text-left px-4 py-3 text-xs font-inter font-semibold text-dark/40 uppercase tracking-wide hidden md:table-cell">Category</th>
+                    <th className="text-left px-4 py-3 text-xs font-inter font-semibold text-dark/40 uppercase tracking-wide hidden lg:table-cell">Section</th>
                     <th className="text-left px-4 py-3 text-xs font-inter font-semibold text-dark/40 uppercase tracking-wide">Price</th>
                     <th className="text-left px-4 py-3 text-xs font-inter font-semibold text-dark/40 uppercase tracking-wide hidden lg:table-cell">Tag</th>
                     <th className="text-center px-4 py-3 text-xs font-inter font-semibold text-dark/40 uppercase tracking-wide hidden lg:table-cell">Featured</th>
@@ -412,7 +473,25 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         </div>
                       </td>
                       <td className="px-4 py-4 hidden md:table-cell">
-                        <span className="font-inter text-xs text-dark/60 bg-light px-2.5 py-1 rounded-full">{product.category}</span>
+                        <div>
+                          <span className="font-inter text-xs text-dark/70 bg-light px-2.5 py-1 rounded-full">{product.category}</span>
+                          {product.subCategory && (
+                            <p className="font-inter text-[10px] text-dark/35 mt-1 pl-0.5">{product.subCategory}</p>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 hidden lg:table-cell">
+                        {product.section ? (
+                          <span className={`font-inter text-[10px] px-2 py-1 rounded-full ${
+                            product.section === 'Signature Events'
+                              ? 'bg-gold/10 text-gold'
+                              : 'bg-primary/10 text-primary'
+                          }`}>
+                            {product.section === 'Signature Events' ? 'Signature' : 'Social'}
+                          </span>
+                        ) : (
+                          <span className="font-inter text-[10px] text-dark/30">—</span>
+                        )}
                       </td>
                       <td className="px-4 py-4">
                         <span className="font-inter font-semibold text-sm text-gold">{formatPrice(product.price)}</span>
@@ -430,11 +509,9 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         </span>
                       </td>
                       <td className="px-4 py-4 text-center hidden lg:table-cell">
-                        {product.featured ? (
-                          <Star className="w-4 h-4 text-gold fill-gold mx-auto" />
-                        ) : (
-                          <StarOff className="w-4 h-4 text-dark/20 mx-auto" />
-                        )}
+                        {product.featured
+                          ? <Star className="w-4 h-4 text-gold fill-gold mx-auto" />
+                          : <StarOff className="w-4 h-4 text-dark/20 mx-auto" />}
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-end gap-2">
@@ -443,21 +520,18 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="p-1.5 rounded-lg text-dark/30 hover:text-primary hover:bg-primary/10 transition-all"
-                            title="View"
                           >
                             <Eye className="w-4 h-4" />
                           </a>
                           <button
                             onClick={() => openEditForm(product)}
                             className="p-1.5 rounded-lg text-dark/30 hover:text-gold hover:bg-gold/10 transition-all"
-                            title="Edit"
                           >
                             <Pencil className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => setDeleteConfirm(product._id)}
                             className="p-1.5 rounded-lg text-dark/30 hover:text-red-500 hover:bg-red-50 transition-all"
-                            title="Delete"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -472,7 +546,50 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         </div>
       </div>
 
-      {/* Delete Confirmation Modal */}
+      {/* Seed confirm modal */}
+      <AnimatePresence>
+        {showSeedConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-dark/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowSeedConfirm(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="w-12 h-12 rounded-xl bg-gold/10 flex items-center justify-center mb-4">
+                <Database className="w-6 h-6 text-gold" />
+              </div>
+              <h3 className="font-playfair text-xl font-semibold text-dark mb-2">Seed Demo Data?</h3>
+              <p className="font-inter text-sm text-dark/60 mb-6">
+                This will <span className="font-semibold text-red-500">delete all existing products</span> and replace them with 18 demo products covering all new categories.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowSeedConfirm(false)}
+                  className="flex-1 py-3 rounded-xl border border-dark/10 font-inter text-sm text-dark/60 hover:bg-light transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSeed}
+                  className="flex-1 py-3 rounded-xl btn-gold text-dark font-inter font-medium text-sm transition-colors"
+                >
+                  Yes, Seed It
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete modal */}
       <AnimatePresence>
         {deleteConfirm && (
           <motion.div
@@ -493,9 +610,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 <AlertTriangle className="w-6 h-6 text-red-500" />
               </div>
               <h3 className="font-playfair text-xl font-semibold text-dark mb-2">Delete Product?</h3>
-              <p className="font-inter text-sm text-dark/60 mb-6">
-                This action cannot be undone. The product will be permanently removed.
-              </p>
+              <p className="font-inter text-sm text-dark/60 mb-6">This action cannot be undone. The product will be permanently removed.</p>
               <div className="flex gap-3">
                 <button
                   onClick={() => setDeleteConfirm(null)}
@@ -515,37 +630,37 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         )}
       </AnimatePresence>
 
-      {/* Add/Edit Product Modal */}
+      {/* Add/Edit product modal */}
       <AnimatePresence>
         {showForm && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-dark/60 backdrop-blur-sm z-50 flex items-start justify-center p-4 pt-20 overflow-y-auto"
+            className="fixed inset-0 bg-dark/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowForm(false)}
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0 }}
               transition={{ duration: 0.3 }}
-              className="bg-white rounded-3xl w-full max-w-2xl shadow-xl mb-8"
+              className="bg-white rounded-3xl w-full max-w-2xl shadow-xl flex flex-col overflow-hidden"
+              style={{ maxHeight: '90vh' }}
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Form Header */}
-              <div className="flex items-center justify-between px-7 py-5 border-b border-dark/10">
+              {/* Modal header */}
+              <div className="flex items-center justify-between px-7 py-5 border-b border-dark/10 shrink-0">
                 <h2 className="font-playfair text-xl font-semibold text-dark">
                   {editingProduct ? 'Edit Product' : 'Add New Product'}
                 </h2>
-                <button
-                  onClick={() => setShowForm(false)}
-                  className="p-2 rounded-xl text-dark/30 hover:text-dark hover:bg-light transition-all"
-                >
+                <button onClick={() => setShowForm(false)} className="p-2 rounded-xl text-dark/30 hover:text-dark hover:bg-light transition-all">
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="p-7 space-y-6">
+              <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+              <div className="flex-1 overflow-y-auto min-h-0 p-7 space-y-6">
                 {formError && (
                   <div className="flex items-center gap-2 bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm font-inter">
                     <AlertTriangle className="w-4 h-4 shrink-0" />
@@ -555,9 +670,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
                 {/* Title */}
                 <div>
-                  <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">
-                    Title *
-                  </label>
+                  <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">Title *</label>
                   <input
                     type="text"
                     required
@@ -568,26 +681,103 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   />
                 </div>
 
-                {/* Category + Budget Tag */}
+                {/* Section */}
+                <div>
+                  <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">Section</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {['', ...SECTIONS].map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, section: s, category: '', subCategory: '' })}
+                        className={`px-4 py-2.5 rounded-xl font-inter text-sm font-medium transition-all duration-200 border text-left ${
+                          formData.section === s
+                            ? s === 'Signature Events'
+                              ? 'bg-gold/10 border-gold/40 text-gold'
+                              : s === 'Social & Home Celebrations'
+                              ? 'bg-primary/10 border-primary/30 text-primary'
+                              : 'bg-dark text-white border-dark'
+                            : 'bg-light border-dark/10 text-dark/60 hover:border-dark/20'
+                        }`}
+                      >
+                        {s === '' ? 'No Section' : s === 'Signature Events' ? '✦ Signature Events' : '🏠 Social & Home'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Category + Sub-category */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">
-                      Category *
-                    </label>
+                    <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">Category *</label>
                     <select
                       required
                       value={formData.category}
-                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value, subCategory: '' })}
                       className="w-full px-4 py-3 rounded-xl bg-light border border-dark/10 text-dark font-inter text-sm focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all appearance-none cursor-pointer"
                     >
-                      <option value="">Select...</option>
-                      {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+                      <option value="">Select category...</option>
+                      {formData.section ? (
+                        // Grouped by section when section is selected
+                        Object.keys(CATEGORY_STRUCTURE[formData.section as keyof typeof CATEGORY_STRUCTURE] || {}).map((cat) => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))
+                      ) : (
+                        // All categories grouped by section
+                        SECTIONS.map((sec) => (
+                          <optgroup key={sec} label={sec}>
+                            {Object.keys(CATEGORY_STRUCTURE[sec]).map((cat) => (
+                              <option key={cat} value={cat}>{cat}</option>
+                            ))}
+                          </optgroup>
+                        ))
+                      )}
                     </select>
                   </div>
                   <div>
                     <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">
-                      Budget Tag *
+                      Sub-category
+                      {availableSubCategories.length === 0 && formData.category && (
+                        <span className="text-dark/30 normal-case ml-1 font-normal">(none)</span>
+                      )}
                     </label>
+                    <select
+                      value={formData.subCategory}
+                      onChange={(e) => setFormData({ ...formData, subCategory: e.target.value })}
+                      disabled={availableSubCategories.length === 0}
+                      className="w-full px-4 py-3 rounded-xl bg-light border border-dark/10 text-dark font-inter text-sm focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all appearance-none cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <option value="">None</option>
+                      {availableSubCategories.map((sub) => (
+                        <option key={sub} value={sub}>{sub}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Gender + Budget Tag */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">For (Gender)</label>
+                    <div className="flex gap-2">
+                      {GENDER_OPTIONS.map((g) => (
+                        <button
+                          key={g}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, gender: g })}
+                          className={`flex-1 py-2.5 rounded-xl font-inter text-xs font-medium transition-all duration-200 border ${
+                            formData.gender === g
+                              ? 'bg-dark text-white border-dark'
+                              : 'bg-light text-dark/60 border-dark/10 hover:border-dark/20'
+                          }`}
+                        >
+                          {g === 'Male' ? '♂' : g === 'Female' ? '♀' : '⚤'} {g}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">Budget Tag *</label>
                     <select
                       required
                       value={formData.budgetTag}
@@ -603,9 +793,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 {/* Price + Discount */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">
-                      Price (₹) *
-                    </label>
+                    <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">Price (₹) *</label>
                     <input
                       type="number"
                       required
@@ -617,9 +805,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">
-                      Discount (%)
-                    </label>
+                    <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">Discount (%)</label>
                     <input
                       type="number"
                       min="0"
@@ -634,9 +820,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
                 {/* Description */}
                 <div>
-                  <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">
-                    Description
-                  </label>
+                  <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">Description</label>
                   <textarea
                     rows={3}
                     value={formData.description}
@@ -648,9 +832,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
                 {/* Includes */}
                 <div>
-                  <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">
-                    Package Includes
-                  </label>
+                  <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">Package Includes</label>
                   <div className="space-y-2">
                     {formData.includes.map((item, i) => (
                       <div key={i} className="flex gap-2">
@@ -661,21 +843,13 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           placeholder={`Include item ${i + 1}`}
                           className="flex-1 px-4 py-2.5 rounded-xl bg-light border border-dark/10 text-dark font-inter text-sm focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all"
                         />
-                        <button
-                          type="button"
-                          onClick={() => removeListItem('includes', i)}
-                          className="p-2.5 rounded-xl text-dark/30 hover:text-red-500 hover:bg-red-50 transition-all"
-                        >
+                        <button type="button" onClick={() => removeListItem('includes', i)} className="p-2.5 rounded-xl text-dark/30 hover:text-red-500 hover:bg-red-50 transition-all">
                           <X className="w-4 h-4" />
                         </button>
                       </div>
                     ))}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => addListItem('includes')}
-                    className="mt-2 flex items-center gap-1.5 text-xs font-inter text-primary hover:text-dark transition-colors"
-                  >
+                  <button type="button" onClick={() => addListItem('includes')} className="mt-2 flex items-center gap-1.5 text-xs font-inter text-primary hover:text-dark transition-colors">
                     <Plus className="w-3.5 h-3.5" />
                     Add item
                   </button>
@@ -683,9 +857,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
                 {/* Excludes */}
                 <div>
-                  <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">
-                    What&apos;s Excluded
-                  </label>
+                  <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">What&apos;s Excluded</label>
                   <div className="space-y-2">
                     {formData.excludes.map((item, i) => (
                       <div key={i} className="flex gap-2">
@@ -696,21 +868,13 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           placeholder={`Exclude item ${i + 1}`}
                           className="flex-1 px-4 py-2.5 rounded-xl bg-light border border-dark/10 text-dark font-inter text-sm focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all"
                         />
-                        <button
-                          type="button"
-                          onClick={() => removeListItem('excludes', i)}
-                          className="p-2.5 rounded-xl text-dark/30 hover:text-red-500 hover:bg-red-50 transition-all"
-                        >
+                        <button type="button" onClick={() => removeListItem('excludes', i)} className="p-2.5 rounded-xl text-dark/30 hover:text-red-500 hover:bg-red-50 transition-all">
                           <X className="w-4 h-4" />
                         </button>
                       </div>
                     ))}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => addListItem('excludes')}
-                    className="mt-2 flex items-center gap-1.5 text-xs font-inter text-primary hover:text-dark transition-colors"
-                  >
+                  <button type="button" onClick={() => addListItem('excludes')} className="mt-2 flex items-center gap-1.5 text-xs font-inter text-primary hover:text-dark transition-colors">
                     <Plus className="w-3.5 h-3.5" />
                     Add item
                   </button>
@@ -718,11 +882,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
                 {/* Images */}
                 <div>
-                  <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">
-                    Images
-                  </label>
-
-                  {/* Image Previews */}
+                  <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">Images</label>
                   {formData.images.length > 0 && (
                     <div className="flex flex-wrap gap-3 mb-3">
                       {formData.images.map((url, i) => (
@@ -741,8 +901,6 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       ))}
                     </div>
                   )}
-
-                  {/* Upload Button */}
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -760,15 +918,13 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     {uploadLoading ? (
                       <><Loader2 className="w-4 h-4 animate-spin" /> Uploading...</>
                     ) : (
-                      <><Upload className="w-4 h-4" /> Upload Images (requires Cloudinary setup)</>
+                      <><Upload className="w-4 h-4" /> Upload Images</>
                     )}
                   </button>
-                  <p className="text-xs font-inter text-dark/40 mt-1.5">
-                    Or paste image URL directly in the includes field. Max 10 images.
-                  </p>
+                  <p className="text-xs font-inter text-dark/40 mt-1.5">Max 10 images per product.</p>
                 </div>
 
-                {/* Featured Toggle */}
+                {/* Featured toggle */}
                 <div className="flex items-center justify-between p-4 rounded-xl bg-light border border-dark/5">
                   <div>
                     <p className="font-inter font-medium text-sm text-dark">Featured Product</p>
@@ -777,18 +933,20 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, featured: !formData.featured })}
-                    className={`w-11 h-6 rounded-full transition-all duration-300 relative ${
-                      formData.featured ? 'bg-gold' : 'bg-dark/20'
-                    }`}
+                    className={`w-11 h-6 rounded-full transition-all duration-300 relative ${formData.featured ? 'bg-gold' : 'bg-dark/20'}`}
                   >
-                    <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all duration-300 ${
-                      formData.featured ? 'left-5.5 translate-x-0.5' : 'left-0.5'
-                    }`} style={{ left: formData.featured ? '22px' : '2px' }} />
+                    <div
+                      className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all duration-300"
+                      style={{ left: formData.featured ? '22px' : '2px' }}
+                    />
                   </button>
                 </div>
 
-                {/* Submit */}
-                <div className="flex gap-3 pt-2">
+              </div>
+
+              {/* Sticky footer */}
+              <div className="px-7 pb-6 pt-4 border-t border-dark/8 shrink-0">
+                <div className="flex gap-3">
                   <button
                     type="button"
                     onClick={() => setShowForm(false)}
@@ -808,6 +966,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     )}
                   </button>
                 </div>
+              </div>
               </form>
             </motion.div>
           </motion.div>

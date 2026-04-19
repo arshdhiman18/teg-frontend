@@ -5,11 +5,15 @@ import Link from 'next/link';
 import { motion, AnimatePresence, useInView, useScroll, useTransform, type MotionValue } from 'framer-motion';
 import {
   ArrowRight,
+  ChevronLeft,
+  ChevronRight,
   Sparkles,
   Shield,
   IndianRupee,
   Star,
   X,
+  Gem,
+  Home,
 } from 'lucide-react';
 
 const storyCards = [
@@ -43,13 +47,153 @@ const storyCards = [
   },
 ];
 
-const categories = [
-  { num: '01', label: 'Birthday',    tagline: 'Turn another year into a legendary night', detail: 'Balloon arches · Neon signs · Floral walls',        href: '/collections?category=Birthday',    from: '#1a0a2e', to: '#2d1547', accent: '#e879f9',  img: 'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=400&h=600&fit=crop&q=80' },
-  { num: '02', label: 'Wedding',     tagline: 'Where forever begins',                      detail: 'Grand mandaps · Floral drapes · Fairy lights',    href: '/collections?category=Wedding',     from: '#1F3D3A', to: '#0d1f1c', accent: '#C6A769',  img: 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=400&h=600&fit=crop&q=80' },
-  { num: '03', label: 'Anniversary', tagline: 'Celebrate years of love',                   detail: 'Intimate setups · Rose showers · Candlelight',    href: '/collections?category=Anniversary', from: '#2d1a1a', to: '#1a0d0d', accent: '#f87171',  img: 'https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?w=400&h=600&fit=crop&q=80' },
-  { num: '04', label: 'Corporate',   tagline: 'Impress. Inspire. Elevate.',                detail: 'Brand setups · Awards nights · Team events',       href: '/collections?category=Corporate',   from: '#0f1a2e', to: '#0a1020', accent: '#60a5fa',  img: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=600&fit=crop&q=80' },
-  { num: '05', label: 'Baby Shower', tagline: 'Welcome little wonders',                    detail: 'Pastel themes · Balloon clouds · Floral arches',  href: '/collections?category=Baby Shower', from: '#0d1f18', to: '#071410', accent: '#86efac',  img: 'https://images.unsplash.com/photo-1555252333-9f8e92e65df9?w=400&h=600&fit=crop&q=80' },
-  { num: '06', label: 'Engagement',  tagline: 'The moment that changes everything',        detail: 'Proposal setups · Ring reveals · Petal showers',  href: '/collections?category=Engagement',  from: '#2a1a2d', to: '#1a0d1f', accent: '#c084fc',  img: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=400&h=600&fit=crop&q=80' },
+const SOCIAL_CATEGORIES = [
+  {
+    num: '01',
+    label: 'Birthday Decor',
+    tagline: 'Turn another year into a legendary celebration',
+    detail: 'Balloon arches · Neon signs · Floral walls',
+    href: '/collections?mainCategory=Birthday+Decor',
+    from: '#1a0a2e',
+    to: '#2d1547',
+    accent: '#e879f9',
+    img: 'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=400&h=600&fit=crop&q=80',
+  },
+  {
+    num: '02',
+    label: 'Anniversary Decor',
+    tagline: 'Celebrate years of love',
+    detail: 'Intimate setups · Rose showers · Candlelight',
+    href: '/collections?mainCategory=Anniversary+Decor',
+    from: '#2d1a1a',
+    to: '#1a0d0d',
+    accent: '#f87171',
+    img: 'https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?w=400&h=600&fit=crop&q=80',
+  },
+  {
+    num: '03',
+    label: 'Baby Shower',
+    tagline: 'Welcome little wonders',
+    detail: 'Pastel themes · Balloon clouds · Floral arches',
+    href: '/collections?mainCategory=Baby+Shower',
+    from: '#0d1f18',
+    to: '#071410',
+    accent: '#86efac',
+    img: 'https://images.unsplash.com/photo-1555252333-9f8e92e65df9?w=400&h=600&fit=crop&q=80',
+  },
+  {
+    num: '04',
+    label: 'Newborn Welcome',
+    tagline: 'First hello, forever memory',
+    detail: 'Cozy setups · Soft pastels · Photo corners',
+    href: '/collections?mainCategory=Newborn+Welcome',
+    from: '#1a1a2d',
+    to: '#0d0d1a',
+    accent: '#c4b5fd',
+    img: 'https://images.unsplash.com/photo-1491013516836-7db643ee125a?w=400&h=600&fit=crop&q=80',
+  },
+  {
+    num: '05',
+    label: 'Proposal Setup',
+    tagline: 'The moment that changes everything',
+    detail: 'Candles · Petal showers · Fairy lights',
+    href: '/collections?mainCategory=Proposal+%2F+Romantic+Setup',
+    from: '#2a1a2d',
+    to: '#1a0d1f',
+    accent: '#c084fc',
+    img: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=400&h=600&fit=crop&q=80',
+  },
+  {
+    num: '06',
+    label: 'Bachelor / Bachelorette',
+    tagline: 'Last night of freedom, legendary',
+    detail: 'Neon vibes · Party décor · Theme nights',
+    href: '/collections?mainCategory=Bachelor+%2F+Bachelorette',
+    from: '#1a0a1a',
+    to: '#0d040d',
+    accent: '#f472b6',
+    img: 'https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=400&h=600&fit=crop&q=80',
+  },
+  {
+    num: '07',
+    label: 'Wedding & Traditional',
+    tagline: 'Where forever begins',
+    detail: 'Mandaps · Floral drapes · Fairy lights',
+    href: '/collections?mainCategory=Wedding+%26+Traditional+Events',
+    from: '#1F3D3A',
+    to: '#0d1f1c',
+    accent: '#C6A769',
+    img: 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=400&h=600&fit=crop&q=80',
+  },
+  {
+    num: '08',
+    label: 'Specialized Setups',
+    tagline: 'Every detail, uniquely perfected',
+    detail: 'Thematic · Floral · Traditional · Kids',
+    href: '/collections?mainCategory=Specialized+Setups',
+    from: '#0f1a2e',
+    to: '#0a1020',
+    accent: '#60a5fa',
+    img: 'https://images.unsplash.com/photo-1478146896981-b80fe463b330?w=400&h=600&fit=crop&q=80',
+  },
+];
+
+const SIGNATURE_CATEGORIES = [
+  {
+    num: '01',
+    label: 'Luxury Social Events',
+    tagline: 'Elegance, elevated',
+    detail: 'Grand setups · VIP experiences · Bespoke design',
+    href: '/collections?mainCategory=Luxury+Social+Events',
+    from: '#1F3D3A',
+    to: '#0d1f1c',
+    accent: '#C6A769',
+    img: 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=400&h=600&fit=crop&q=80',
+  },
+  {
+    num: '02',
+    label: 'Wedding Experiences',
+    tagline: 'A wedding unlike any other',
+    detail: 'Destination · Luxury mandaps · Full design',
+    href: '/collections?mainCategory=Wedding+Experiences',
+    from: '#2d1a1a',
+    to: '#1a0d0d',
+    accent: '#fbbf24',
+    img: 'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=400&h=600&fit=crop&q=80',
+  },
+  {
+    num: '03',
+    label: 'Experiential Events',
+    tagline: 'Immersive. Unforgettable.',
+    detail: 'Club nights · Comedy · Workshops',
+    href: '/collections?mainCategory=Experiential+Events',
+    from: '#1a0a2e',
+    to: '#2d1547',
+    accent: '#a78bfa',
+    img: 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=400&h=600&fit=crop&q=80',
+  },
+  {
+    num: '04',
+    label: 'Corporate Events',
+    tagline: 'Impress. Inspire. Elevate.',
+    detail: 'Brand setups · Awards nights · Team events',
+    href: '/collections?mainCategory=Corporate+Events',
+    from: '#0f1a2e',
+    to: '#0a1020',
+    accent: '#60a5fa',
+    img: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=600&fit=crop&q=80',
+  },
+  {
+    num: '05',
+    label: 'Spiritual Gatherings',
+    tagline: 'Sacred spaces, beautifully created',
+    detail: 'Pujas · Ceremonies · Traditional décor',
+    href: '/collections?mainCategory=Spiritual+Gatherings',
+    from: '#2d1a0a',
+    to: '#1a0d05',
+    accent: '#fb923c',
+    img: 'https://images.unsplash.com/photo-1561386369-8b3a51aefd14?w=400&h=600&fit=crop&q=80',
+  },
 ];
 
 const whyTEG = [
@@ -73,7 +217,6 @@ const whyTEG = [
   },
 ];
 
-// Letter-by-letter color scrub — each instance calls useTransform at component level (no hooks-in-loop)
 function AnimatedLetter({ char, index, total, progress, isGold }: {
   char: string; index: number; total: number;
   progress: MotionValue<number>; isGold: boolean;
@@ -91,7 +234,6 @@ function AnimatedLetter({ char, index, total, progress, isGold }: {
 function AnimatedSection({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-80px' });
-
   return (
     <motion.div
       ref={ref}
@@ -111,50 +253,54 @@ export default function HomePage() {
   const heroY = useTransform(scrollYProgress, [0, 1], ['0%', '30%']);
   const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
 
-  // Story title — scroll-scrubbed word reveal (GSAP ScrollTrigger equivalent)
   const titleRef = useRef(null);
   const { scrollYProgress: titleProgress } = useScroll({ target: titleRef, offset: ['start 0.88', 'start 0.1'] });
   const w0Opacity = useTransform(titleProgress, [0, 0.18], [0, 1]);
-  const w0Y       = useTransform(titleProgress, [0, 0.18], [48, 0]);
+  const w0Y = useTransform(titleProgress, [0, 0.18], [48, 0]);
   const w1Opacity = useTransform(titleProgress, [0.2, 0.38], [0, 1]);
-  const w1Y       = useTransform(titleProgress, [0.2, 0.38], [48, 0]);
+  const w1Y = useTransform(titleProgress, [0.2, 0.38], [48, 0]);
   const w2Opacity = useTransform(titleProgress, [0.4, 0.58], [0, 1]);
-  const w2Y       = useTransform(titleProgress, [0.4, 0.58], [48, 0]);
+  const w2Y = useTransform(titleProgress, [0.4, 0.58], [48, 0]);
   const w3Opacity = useTransform(titleProgress, [0.6, 0.78], [0, 1]);
-  const w3Y       = useTransform(titleProgress, [0.6, 0.78], [48, 0]);
+  const w3Y = useTransform(titleProgress, [0.6, 0.78], [48, 0]);
 
-  // "Every Celebration Deserves Magic" + horizontal card scroll (unified)
-  const catHorizRef = useRef<HTMLDivElement>(null);
-  // Start when section is 80% down viewport (20% of prev section still visible)
-  const { scrollYProgress: catHorizProgress } = useScroll({ target: catHorizRef, offset: ['start 0.8', 'end end'] });
-  // Words reveal (0 → 14%)
-  const c0Opacity = useTransform(catHorizProgress, [0,    0.03], [0, 1]);
-  const c0Y       = useTransform(catHorizProgress, [0,    0.03], [48, 0]);
-  const c1Opacity = useTransform(catHorizProgress, [0.03, 0.07], [0, 1]);
-  const c1Y       = useTransform(catHorizProgress, [0.03, 0.07], [48, 0]);
-  const c2Opacity = useTransform(catHorizProgress, [0.07, 0.11], [0, 1]);
-  const c2Y       = useTransform(catHorizProgress, [0.07, 0.11], [48, 0]);
-  const c3Opacity = useTransform(catHorizProgress, [0.11, 0.15], [0, 1]);
-  const c3Y       = useTransform(catHorizProgress, [0.11, 0.15], [48, 0]);
-  // Single unified container — title block + cards slide together as one unit.
-  // Desktop: start with title ~centered, slide left until last card is visible.
-  // Mobile: tighter start since title is narrower.
-  const containerXDesktop = useTransform(catHorizProgress, [0.15, 1.0], [80, -1300]);
-  const containerXMobile  = useTransform(catHorizProgress, [0.15, 1.0], [40,  -2200]);
+  // Categories section state
+  const [activeTab, setActiveTab] = useState<'social' | 'signature'>('social');
+  const [catIndex, setCatIndex] = useState(0);
+  const CAT_VISIBLE = 3;
+  const CARD_STEP = 320; // card width (300) + gap (20)
+  const activeCategories = activeTab === 'social' ? SOCIAL_CATEGORIES : SIGNATURE_CATEGORIES;
+  const catMaxIndex = Math.max(0, activeCategories.length - CAT_VISIBLE);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  // "Why Discerning Clients Choose Us" scroll-scrubbed reveal
+  const scrollToIndex = (index: number) => {
+    scrollRef.current?.scrollTo({ left: index * CARD_STEP, behavior: 'smooth' });
+    setCatIndex(index);
+  };
+
+  const handleCarouselScroll = () => {
+    if (!scrollRef.current) return;
+    const idx = Math.min(Math.round(scrollRef.current.scrollLeft / CARD_STEP), catMaxIndex);
+    setCatIndex(idx);
+  };
+
+  const handleTabChange = (tab: 'social' | 'signature') => {
+    setActiveTab(tab);
+    setCatIndex(0);
+    setTimeout(() => scrollRef.current?.scrollTo({ left: 0, behavior: 'instant' }), 50);
+  };
+
   const whyTitleRef = useRef(null);
   const { scrollYProgress: whyProgress } = useScroll({ target: whyTitleRef, offset: ['start 0.88', 'start 0.1'] });
   const y0Opacity = useTransform(whyProgress, [0, 0.2], [0, 1]);
-  const y0Y       = useTransform(whyProgress, [0, 0.2], [48, 0]);
+  const y0Y = useTransform(whyProgress, [0, 0.2], [48, 0]);
   const y1Opacity = useTransform(whyProgress, [0.22, 0.42], [0, 1]);
-  const y1Y       = useTransform(whyProgress, [0.22, 0.42], [48, 0]);
+  const y1Y = useTransform(whyProgress, [0.22, 0.42], [48, 0]);
   const y2Opacity = useTransform(whyProgress, [0.44, 0.64], [0, 1]);
-  const y2Y       = useTransform(whyProgress, [0.44, 0.64], [48, 0]);
+  const y2Y = useTransform(whyProgress, [0.44, 0.64], [48, 0]);
   const y3Opacity = useTransform(whyProgress, [0.66, 0.86], [0, 1]);
-  const y3Y       = useTransform(whyProgress, [0.66, 0.86], [48, 0]);
+  const y3Y = useTransform(whyProgress, [0.66, 0.86], [48, 0]);
 
-  // Video showcase — scroll-scrubbed circle mask expand
   const [videoModal, setVideoModal] = useState(false);
   const videoSectionRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress: videoProgress } = useScroll({
@@ -166,17 +312,14 @@ export default function HomePage() {
   const videoTitleOpacity = useTransform(videoProgress, [0, 0.2], [1, 0]);
   const videoTitleY = useTransform(videoProgress, [0, 0.2], [0, -28]);
 
-  // "Ready to Create Something Extraordinary?" — letter-by-letter color scrub
-  // Words: Ready(5) to(2) Create(6) Something(9) Extraordinary?(14) = 36 letters total
   const CTA_WORDS = ['Ready', 'to', 'Create', 'Something', 'Extraordinary?'] as const;
-  const CTA_WORD_STARTS = [0, 5, 7, 13, 22] as const; // cumulative letter index before each word
+  const CTA_WORD_STARTS = [0, 5, 7, 13, 22] as const;
   const CTA_TOTAL = 36;
   const ctaTitleRef = useRef(null);
   const { scrollYProgress: ctaProgress } = useScroll({ target: ctaTitleRef, offset: ['start 0.9', 'start 0.0'] });
-  // Description: tilted → straight after letters reveal
-  const descSkew  = useTransform(ctaProgress, [0.85, 1.0], [6, 0]);
+  const descSkew = useTransform(ctaProgress, [0.85, 1.0], [6, 0]);
   const descOpacity = useTransform(ctaProgress, [0.85, 1.0], [0, 1]);
-  const descY     = useTransform(ctaProgress, [0.85, 1.0], [20, 0]);
+  const descY = useTransform(ctaProgress, [0.85, 1.0], [20, 0]);
 
   return (
     <>
@@ -185,12 +328,10 @@ export default function HomePage() {
         ref={heroRef}
         className="relative min-h-screen flex items-center justify-center overflow-hidden bg-dark"
       >
-        {/* Background gradient */}
         <div className="absolute inset-0 bg-gradient-to-br from-dark via-dark-light to-dark" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(74,151,138,0.15),transparent_60%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(198,167,105,0.08),transparent_60%)]" />
 
-        {/* Floating particles */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {[...Array(12)].map((_, i) => (
             <div
@@ -206,18 +347,15 @@ export default function HomePage() {
               }}
             />
           ))}
-          {/* Decorative rings */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full border border-gold/5" />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full border border-gold/3" />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full border border-primary/10" />
         </div>
 
-        {/* Hero Content */}
         <motion.div
           style={{ y: heroY, opacity: heroOpacity }}
           className="relative z-10 text-center px-4 max-w-5xl mx-auto pt-20 md:pt-0"
         >
-          {/* Tag line */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -225,12 +363,9 @@ export default function HomePage() {
             className="inline-flex items-center gap-2 bg-gold/10 border border-gold/20 px-4 py-2 rounded-full mb-8"
           >
             <Sparkles className="w-3.5 h-3.5 text-gold" />
-            <span className="font-inter text-xs text-gold tracking-widest uppercase">
-              Luxury Event Design
-            </span>
+            <span className="font-inter text-xs text-gold tracking-widest uppercase">Luxury Event Design</span>
           </motion.div>
 
-          {/* Main Headline */}
           <motion.h1
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
@@ -249,7 +384,6 @@ export default function HomePage() {
             We Design Experiences.
           </motion.h1>
 
-          {/* Subtitle */}
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -260,7 +394,6 @@ export default function HomePage() {
             Every detail is intentional, every moment is unforgettable.
           </motion.p>
 
-          {/* CTA Buttons */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -276,41 +409,259 @@ export default function HomePage() {
             </Link>
           </motion.div>
         </motion.div>
-
       </section>
 
-      {/* ===== STATS BAR ===== */}
-      <section className="bg-dark border-t border-b border-gold/10 py-10">
-        <div className="max-w-4xl mx-auto px-4">
-          <AnimatedSection>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-8 sm:gap-16 lg:gap-24">
-              {[
-                { number: '500+', label: 'Events Curated' },
-                { number: '10+', label: 'Cities Served' },
-                { number: '98%', label: 'Satisfaction Rate' },
-              ].map((stat, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.15, duration: 0.6 }}
-                  className="text-center"
-                >
-                  <div className="font-playfair text-4xl md:text-5xl font-bold text-gold mb-1">
-                    {stat.number}
-                  </div>
-                  <div className="font-inter text-sm text-white/50 tracking-wide uppercase">
-                    {stat.label}
-                  </div>
-                </motion.div>
-              ))}
+      {/* ===== FEATURED CATEGORIES — Two Tabs ===== */}
+      <section className="bg-white py-16 md:py-24 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 md:px-10">
+
+          {/* Section heading */}
+          <div className="mb-10">
+            <p className="font-inter text-xs text-primary tracking-widest uppercase mb-3">Browse by Occasion</p>
+            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+              <h2 className="font-cormorant font-light text-dark leading-[1.1]" style={{ fontSize: 'clamp(2.2rem, 3.5vw, 3.8rem)' }}>
+                Every Celebration<br />
+                <span className="text-gold font-medium">Deserves Magic</span>
+              </h2>
+
+              {/* Tabs + Nav */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                {/* Tab switcher */}
+                <div className="flex items-center gap-1 bg-light rounded-2xl p-1">
+                  <button
+                    onClick={() => handleTabChange('social')}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-inter text-sm font-medium transition-all duration-300 ${
+                      activeTab === 'social'
+                        ? 'bg-dark text-white shadow-sm'
+                        : 'text-dark/50 hover:text-dark'
+                    }`}
+                  >
+                    <Home className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Social &amp; Home</span>
+                    <span className="sm:hidden">Social</span>
+                  </button>
+                  <button
+                    onClick={() => handleTabChange('signature')}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-inter text-sm font-medium transition-all duration-300 ${
+                      activeTab === 'signature'
+                        ? 'bg-dark text-white shadow-sm'
+                        : 'text-dark/50 hover:text-dark'
+                    }`}
+                  >
+                    <Gem className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Signature Events</span>
+                    <span className="sm:hidden">Signature</span>
+                  </button>
+                </div>
+
+                {/* Carousel nav */}
+                <div className="hidden md:flex items-center gap-2">
+                  <button
+                    onClick={() => scrollToIndex(Math.max(0, catIndex - 1))}
+                    disabled={catIndex === 0}
+                    className="w-10 h-10 rounded-full border border-dark/20 flex items-center justify-center text-dark/60 transition-all duration-200 hover:border-dark hover:text-dark disabled:opacity-25 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => scrollToIndex(Math.min(catMaxIndex, catIndex + 1))}
+                    disabled={catIndex >= catMaxIndex}
+                    className="w-10 h-10 rounded-full border border-dark/20 flex items-center justify-center text-dark/60 transition-all duration-200 hover:border-dark hover:text-dark disabled:opacity-25 disabled:cursor-not-allowed"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
             </div>
-          </AnimatedSection>
+
+            {/* Tab label */}
+            <AnimatePresence mode="wait">
+              <motion.p
+                key={activeTab}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.25 }}
+                className="font-inter text-sm text-dark/40 mt-3"
+              >
+                {activeTab === 'social'
+                  ? 'Birthdays, anniversaries, baby showers, proposals & more'
+                  : 'Premium luxury events, corporate, weddings & spiritual gatherings'}
+              </motion.p>
+            </AnimatePresence>
+          </div>
+
+          {/* Card track */}
+          <div ref={scrollRef} onScroll={handleCarouselScroll} className="overflow-x-auto -mx-6 px-6 md:-mx-10 md:px-10 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none' }}>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="flex gap-5 pb-1">
+                  {activeCategories.map((cat, i) => (
+                    <Link key={i} href={cat.href} className="flex-shrink-0">
+                      <motion.div
+                        className="relative rounded-2xl cursor-pointer group"
+                        style={{ width: '300px', height: 'clamp(380px, 52vh, 500px)', willChange: 'transform' }}
+                        whileHover={{ scale: 1.02, y: -5 }}
+                        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                      >
+                        {/* Inner clip so overflow-hidden doesn't fight the scale transform */}
+                        <div className="absolute inset-0 overflow-hidden rounded-2xl">
+                          <img
+                            src={cat.img}
+                            alt={cat.label}
+                            className="absolute inset-0 w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                          <div className="absolute inset-0" style={{ background: `linear-gradient(155deg, ${cat.from}88, ${cat.to}aa)` }} />
+                          <div className="absolute top-0 left-6 right-6 h-px" style={{ background: `linear-gradient(90deg, transparent, ${cat.accent}60, transparent)` }} />
+                          <div className="absolute top-5 left-6 font-cormorant leading-none select-none pointer-events-none" style={{ fontSize: '5.5rem', fontWeight: 300, color: 'rgba(255,255,255,0.07)' }}>{cat.num}</div>
+                          <div className="absolute bottom-0 left-0 right-0 p-6" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.88) 0%, transparent 100%)' }}>
+                            <p className="font-inter text-[9px] tracking-[0.2em] uppercase mb-2.5" style={{ color: cat.accent, opacity: 0.85 }}>{cat.detail}</p>
+                            <h3 className="font-cormorant text-white leading-none mb-2" style={{ fontSize: '2.1rem', fontWeight: 300 }}>{cat.label}</h3>
+                            <p className="font-inter text-xs text-white/40 mb-5 leading-relaxed">{cat.tagline}</p>
+                            <div className="flex items-center gap-2" style={{ color: cat.accent, opacity: 0.55 }}>
+                              <span className="font-inter text-[9px] tracking-widest uppercase group-hover:opacity-100 transition-opacity duration-300">Explore Setups</span>
+                              <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform duration-300" />
+                            </div>
+                          </div>
+                        </div>
+                        {/* Accent border ring sits outside the clip so it's never cropped */}
+                        <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style={{ boxShadow: `inset 0 0 0 1px ${cat.accent}45` }} />
+                      </motion.div>
+                    </Link>
+                  ))}
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* Dot indicators */}
+          <div className="hidden md:flex justify-start items-center gap-2 mt-8">
+            {Array.from({ length: catMaxIndex + 1 }).map((_, i) => (
+              <button
+                key={i}
+                onClick={() => scrollToIndex(i)}
+                className={`transition-all duration-300 rounded-full ${catIndex === i ? 'w-6 h-2 bg-dark' : 'w-2 h-2 bg-dark/20 hover:bg-dark/40'}`}
+              />
+            ))}
+          </div>
+
         </div>
       </section>
 
-      {/* ===== STORY CARDS - HORIZONTAL SCROLL ===== */}
+      {/* ===== VIDEO SHOWCASE ===== */}
+      <div
+        ref={videoSectionRef}
+        className="relative"
+        style={{ height: 'calc(100vh + 500px)', background: '#060e0c' }}
+      >
+        <div className="sticky top-0 h-screen overflow-hidden" style={{ background: '#060e0c' }}>
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{ background: 'radial-gradient(ellipse 60% 60% at 50% 50%, rgba(198,167,105,0.06) 0%, transparent 70%)' }}
+          />
+          <motion.div
+            className="absolute left-0 right-0 text-center px-4 z-20 pointer-events-none"
+            style={{ top: '22%', opacity: videoTitleOpacity, y: videoTitleY }}
+          >
+            <p className="font-inter text-xs text-gold tracking-widest uppercase mb-4">Behind the Magic</p>
+            <h2 className="font-cormorant font-light text-white leading-[1.05]" style={{ fontSize: 'clamp(2.6rem, 5vw, 5.5rem)' }}>
+              See What{' '}
+              <span className="text-gold font-medium">We Create</span>
+            </h2>
+          </motion.div>
+          <motion.div className="absolute inset-0" style={{ clipPath: videoClipPath }}>
+            <video
+              src="https://res.cloudinary.com/dww36nzdv/video/upload/Teg-Section_vmiiap.mp4"
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            <div className="absolute inset-0" style={{ background: 'rgba(6,14,12,0.2)' }} />
+          </motion.div>
+          <button
+            onClick={() => setVideoModal(true)}
+            className="absolute top-[62%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 group"
+            style={{ width: 'clamp(120px, 15vw, 156px)', height: 'clamp(120px, 15vw, 156px)' }}
+            aria-label="Play video"
+          >
+            <motion.svg
+              viewBox="0 0 100 100"
+              className="absolute inset-0 w-full h-full"
+              style={{ overflow: 'visible' }}
+              animate={{ rotate: 360 }}
+              transition={{ duration: 12, ease: 'linear', repeat: Infinity }}
+            >
+              <defs>
+                <path id="vid-ring" d="M50,50 m-45,0 a45,45 0 1,1 90,0 a45,45 0 1,1 -90,0" />
+              </defs>
+              <text style={{ fontSize: '9px', letterSpacing: '0.3em', fontFamily: 'sans-serif', fontWeight: 500, textTransform: 'uppercase' }} fill="rgba(255,255,255,0.85)">
+                <textPath href="#vid-ring">PLAY VIDEO · PLAY VIDEO · PLAY VIDEO ·</textPath>
+              </text>
+            </motion.svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div
+                className="rounded-full flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:bg-white/20"
+                style={{ width: '40%', height: '40%', background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.3)', boxShadow: '0 0 32px rgba(198,167,105,0.18)' }}
+              >
+                <div className="ml-[8%]" style={{ width: 0, height: 0, borderTop: '7px solid transparent', borderBottom: '7px solid transparent', borderLeft: '13px solid white' }} />
+              </div>
+            </div>
+          </button>
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 pointer-events-none">
+            <p className="font-inter text-[9px] tracking-widest uppercase text-center" style={{ color: 'rgba(255,255,255,0.18)' }}>Scroll to reveal</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Video Modal */}
+      <AnimatePresence>
+        {videoModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-4 md:p-10"
+            style={{ background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(14px)' }}
+            onClick={(e) => { if (e.target === e.currentTarget) setVideoModal(false); }}
+          >
+            <motion.div
+              initial={{ scale: 0.88, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.88, opacity: 0 }}
+              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+              className="relative w-full max-w-4xl rounded-2xl overflow-hidden"
+              style={{ aspectRatio: '16/9', boxShadow: '0 40px 100px rgba(0,0,0,0.7)' }}
+            >
+              <iframe
+                src="https://player.cloudinary.com/embed/?cloud_name=dww36nzdv&public_id=Teg-Section_vmiiap&autoplay=true&controls=true"
+                className="absolute inset-0 w-full h-full"
+                allow="autoplay; fullscreen; encrypted-media"
+                allowFullScreen
+              />
+            </motion.div>
+            <button
+              onClick={() => setVideoModal(false)}
+              className="absolute top-5 right-5 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110"
+              style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.18)' }}
+            >
+              <X className="w-5 h-5 text-white" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ===== STORY CARDS ===== */}
       <section className="bg-light section-padding overflow-hidden">
         <div className="max-w-7xl mx-auto">
           <div ref={titleRef} className="text-center mb-16 px-4">
@@ -328,7 +679,6 @@ export default function HomePage() {
             </h2>
           </div>
 
-          {/* Desktop: horizontal cards in a row */}
           <div className="hidden lg:grid lg:grid-cols-4 gap-6 px-4">
             {storyCards.map((card, i) => (
               <motion.div
@@ -351,7 +701,6 @@ export default function HomePage() {
             ))}
           </div>
 
-          {/* Mobile: vertical stack */}
           <div className="lg:hidden flex flex-col gap-5 px-4">
             {storyCards.map((card, i) => (
               <motion.div
@@ -377,167 +726,32 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ===== FEATURED CATEGORIES — unified title + cards slide as one container ===== */}
-      <div
-        ref={catHorizRef}
-        className="relative bg-dark"
-        style={{ height: 'calc(100vh + 2000px)' }}
-      >
-        <div className="sticky top-0 h-screen overflow-hidden">
-          {/* Ambient glow */}
-          <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 70% 50% at 30% 50%, rgba(74,151,138,0.06) 0%, transparent 70%)' }} />
-
-          {/* Desktop — unified sliding container */}
-          <div className="hidden md:flex absolute inset-0 items-center" style={{ paddingTop: '80px' }}>
-            <motion.div
-              className="flex items-center gap-16 pl-16"
-              style={{ x: containerXDesktop, willChange: 'transform' }}
-            >
-              {/* Title block */}
-              <div className="flex-shrink-0">
-                <motion.p
-                  className="font-inter text-xs text-primary tracking-widest uppercase mb-4"
-                  style={{ opacity: c0Opacity, y: c0Y }}
+      {/* ===== STATS BAR ===== */}
+      <section className="bg-dark border-t border-b border-gold/10 py-10">
+        <div className="max-w-4xl mx-auto px-4">
+          <AnimatedSection>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-8 sm:gap-16 lg:gap-24">
+              {[
+                { number: '500+', label: 'Events Curated' },
+                { number: '10+', label: 'Cities Served' },
+                { number: '98%', label: 'Satisfaction Rate' },
+              ].map((stat, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.15, duration: 0.6 }}
+                  className="text-center"
                 >
-                  Browse by Occasion
-                </motion.p>
-                <h2 className="font-cormorant font-light text-white leading-[1.1]" style={{ fontSize: 'clamp(2.8rem, 4vw, 4.8rem)' }}>
-                  <span style={{ display: 'block', whiteSpace: 'nowrap' }}>
-                    <motion.span style={{ display: 'inline-block', marginRight: '0.28em', opacity: c1Opacity, y: c1Y }}>Every</motion.span>
-                    <motion.span style={{ display: 'inline-block', opacity: c2Opacity, y: c2Y }}>Celebration</motion.span>
-                  </span>
-                  <span style={{ display: 'block', whiteSpace: 'nowrap' }}>
-                    <motion.span style={{ display: 'inline-block', marginRight: '0.28em', opacity: c3Opacity, y: c3Y }}>Deserves</motion.span>
-                    <motion.span style={{ display: 'inline-block', opacity: c3Opacity, y: c3Y }} className="text-gold font-medium">Magic</motion.span>
-                  </span>
-                </h2>
-              </div>
-
-              {/* Cards */}
-              {categories.map((cat, i) => (
-                <Link key={i} href={cat.href} className="flex-shrink-0">
-                  <motion.div
-                    className="relative overflow-hidden rounded-2xl cursor-pointer group"
-                    style={{ width: '270px', height: 'clamp(380px, 58vh, 520px)' }}
-                    whileHover={{ scale: 1.02, y: -6 }}
-                    transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                  >
-                    {/* Photo */}
-                    <img
-                      src={cat.img}
-                      alt={cat.label}
-                      className="absolute inset-0 w-full h-full object-cover"
-                      loading="lazy"
-                    />
-                    {/* Gradient overlay */}
-                    <div className="absolute inset-0" style={{ background: `linear-gradient(155deg, ${cat.from}88, ${cat.to}aa)` }} />
-
-                    {/* Watermark number */}
-                    <div className="absolute top-5 left-6 font-cormorant leading-none select-none pointer-events-none" style={{ fontSize: 'clamp(4.5rem, 7vw, 6.5rem)', fontWeight: 300, color: 'rgba(255,255,255,0.07)' }}>
-                      {cat.num}
-                    </div>
-
-                    {/* Accent top line */}
-                    <div className="absolute top-0 left-6 right-6 h-px" style={{ background: `linear-gradient(90deg, transparent, ${cat.accent}60, transparent)` }} />
-
-                    {/* Content */}
-                    <div className="absolute bottom-0 left-0 right-0 p-6" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.88) 0%, transparent 100%)' }}>
-                      <p className="font-inter text-[9px] tracking-[0.2em] uppercase mb-2.5 leading-relaxed" style={{ color: cat.accent, opacity: 0.85 }}>
-                        {cat.detail}
-                      </p>
-                      <h3 className="font-cormorant text-white leading-none mb-2" style={{ fontSize: 'clamp(2rem, 3.2vw, 2.8rem)', fontWeight: 300 }}>
-                        {cat.label}
-                      </h3>
-                      <p className="font-inter text-xs text-white/40 mb-5 leading-relaxed">
-                        {cat.tagline}
-                      </p>
-                      <div className="flex items-center gap-2" style={{ color: cat.accent, opacity: 0.55 }}>
-                        <span className="font-inter text-[9px] tracking-widest uppercase group-hover:opacity-100 transition-opacity duration-300">Explore Setups</span>
-                        <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform duration-300" />
-                      </div>
-                    </div>
-
-                    {/* Hover border glow */}
-                    <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style={{ boxShadow: `inset 0 0 0 1px ${cat.accent}45` }} />
-                  </motion.div>
-                </Link>
+                  <div className="font-playfair text-4xl md:text-5xl font-bold text-gold mb-1">{stat.number}</div>
+                  <div className="font-inter text-sm text-white/50 tracking-wide uppercase">{stat.label}</div>
+                </motion.div>
               ))}
-            </motion.div>
-          </div>
-
-          {/* Mobile — unified sliding container */}
-          <div className="flex md:hidden absolute inset-0 items-center" style={{ paddingTop: '80px' }}>
-            <motion.div
-              className="flex items-center gap-8 pl-6"
-              style={{ x: containerXMobile, willChange: 'transform' }}
-            >
-              {/* Title block */}
-              <div className="flex-shrink-0">
-                <motion.p
-                  className="font-inter text-xs text-primary tracking-widest uppercase mb-3"
-                  style={{ opacity: c0Opacity, y: c0Y }}
-                >
-                  Browse by Occasion
-                </motion.p>
-                <h2 className="font-cormorant font-light text-white leading-[1.1]" style={{ fontSize: '2rem' }}>
-                  <span style={{ display: 'block', whiteSpace: 'nowrap' }}>
-                    <motion.span style={{ display: 'inline-block', marginRight: '0.28em', opacity: c1Opacity, y: c1Y }}>Every</motion.span>
-                    <motion.span style={{ display: 'inline-block', opacity: c2Opacity, y: c2Y }}>Celebration</motion.span>
-                  </span>
-                  <span style={{ display: 'block', whiteSpace: 'nowrap' }}>
-                    <motion.span style={{ display: 'inline-block', marginRight: '0.28em', opacity: c3Opacity, y: c3Y }}>Deserves</motion.span>
-                    <motion.span style={{ display: 'inline-block', opacity: c3Opacity, y: c3Y }} className="text-gold font-medium">Magic</motion.span>
-                  </span>
-                </h2>
-              </div>
-
-              {/* Cards */}
-              {categories.map((cat, i) => (
-                <Link key={i} href={cat.href} className="flex-shrink-0">
-                  <div
-                    className="relative overflow-hidden rounded-2xl w-[82vw]"
-                    style={{ height: 'clamp(360px, 55vh, 480px)' }}
-                  >
-                    {/* Photo */}
-                    <img
-                      src={cat.img}
-                      alt={cat.label}
-                      className="absolute inset-0 w-full h-full object-cover"
-                      loading="lazy"
-                    />
-                    {/* Gradient overlay */}
-                    <div className="absolute inset-0" style={{ background: `linear-gradient(155deg, ${cat.from}88, ${cat.to}aa)` }} />
-
-                    {/* Watermark number */}
-                    <div className="absolute top-5 left-6 font-cormorant leading-none select-none pointer-events-none" style={{ fontSize: '5.5rem', fontWeight: 300, color: 'rgba(255,255,255,0.07)' }}>{cat.num}</div>
-                    <div className="absolute top-0 left-6 right-6 h-px" style={{ background: `linear-gradient(90deg, transparent, ${cat.accent}60, transparent)` }} />
-                    <div className="absolute bottom-0 left-0 right-0 p-6" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.88) 0%, transparent 100%)' }}>
-                      <p className="font-inter text-[9px] tracking-[0.2em] uppercase mb-2.5" style={{ color: cat.accent, opacity: 0.85 }}>{cat.detail}</p>
-                      <h3 className="font-cormorant text-white leading-none mb-2" style={{ fontSize: '2.4rem', fontWeight: 300 }}>{cat.label}</h3>
-                      <p className="font-inter text-xs text-white/40 mb-5 leading-relaxed">{cat.tagline}</p>
-                      <div className="flex items-center gap-2" style={{ color: cat.accent, opacity: 0.55 }}>
-                        <span className="font-inter text-[9px] tracking-widest uppercase">Explore Setups</span>
-                        <ArrowRight className="w-3 h-3" />
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </motion.div>
-          </div>
-
-          {/* Scroll hint */}
-          <motion.div
-            className="absolute bottom-7 right-8 md:right-14 flex items-center gap-2 pointer-events-none"
-            style={{ color: 'rgba(255,255,255,0.18)' }}
-            animate={{ y: [0, -6, 0] }}
-            transition={{ duration: 2.4, ease: 'easeInOut', repeat: Infinity }}
-          >
-            <span className="font-inter text-[9px] tracking-widest uppercase">Scroll to explore</span>
-            <ArrowRight className="w-3 h-3" />
-          </motion.div>
+            </div>
+          </AnimatedSection>
         </div>
-      </div>
+      </section>
 
       {/* ===== WHY TEG ===== */}
       <section className="bg-light section-padding">
@@ -579,167 +793,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ===== VIDEO SHOWCASE ===== */}
-      <div
-        ref={videoSectionRef}
-        className="relative"
-        style={{ height: 'calc(100vh + 500px)', background: '#060e0c' }}
-      >
-        <div
-          className="sticky top-0 h-screen overflow-hidden"
-          style={{ background: '#060e0c' }}
-        >
-          {/* Ambient gold glow */}
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{ background: 'radial-gradient(ellipse 60% 60% at 50% 50%, rgba(198,167,105,0.06) 0%, transparent 70%)' }}
-          />
-
-          {/* Title — absolute, upper area, fades out on scroll */}
-          <motion.div
-            className="absolute left-0 right-0 text-center px-4 z-20 pointer-events-none"
-            style={{ top: '22%', opacity: videoTitleOpacity, y: videoTitleY }}
-          >
-            <p className="font-inter text-xs text-gold tracking-widest uppercase mb-4">
-              Behind the Magic
-            </p>
-            <h2
-              className="font-cormorant font-light text-white leading-[1.05]"
-              style={{ fontSize: 'clamp(2.6rem, 5vw, 5.5rem)' }}
-            >
-              See What{' '}
-              <span className="text-gold font-medium">We Create</span>
-            </h2>
-          </motion.div>
-
-          {/* Video layer — clips to expanding circle anchored at dead center */}
-          <motion.div
-            className="absolute inset-0"
-            style={{ clipPath: videoClipPath }}
-          >
-            <video
-              src="https://res.cloudinary.com/dww36nzdv/video/upload/Teg-Section_vmiiap.mp4"
-              autoPlay
-              muted
-              loop
-              playsInline
-              preload="metadata"
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-            <div className="absolute inset-0" style={{ background: 'rgba(6,14,12,0.2)' }} />
-          </motion.div>
-
-          {/* Play button — matches clip-path anchor (50% 62%) */}
-          <button
-            onClick={() => setVideoModal(true)}
-            className="absolute top-[62%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 group"
-            style={{ width: 'clamp(120px, 15vw, 156px)', height: 'clamp(120px, 15vw, 156px)' }}
-            aria-label="Play video"
-          >
-            {/* Rotating "PLAY VIDEO ·" ring */}
-            <motion.svg
-              viewBox="0 0 100 100"
-              className="absolute inset-0 w-full h-full"
-              style={{ overflow: 'visible' }}
-              animate={{ rotate: 360 }}
-              transition={{ duration: 12, ease: 'linear', repeat: Infinity }}
-            >
-              <defs>
-                <path
-                  id="vid-ring"
-                  d="M50,50 m-45,0 a45,45 0 1,1 90,0 a45,45 0 1,1 -90,0"
-                />
-              </defs>
-              <text
-                style={{
-                  fontSize: '9px',
-                  letterSpacing: '0.3em',
-                  fontFamily: 'sans-serif',
-                  fontWeight: 500,
-                  textTransform: 'uppercase',
-                }}
-                fill="rgba(255,255,255,0.85)"
-              >
-                <textPath href="#vid-ring">
-                  PLAY VIDEO · PLAY VIDEO · PLAY VIDEO ·
-                </textPath>
-              </text>
-            </motion.svg>
-
-            {/* Frosted glass play circle — smaller so text ring has room */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div
-                className="rounded-full flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:bg-white/20"
-                style={{
-                  width: '40%', height: '40%',
-                  background: 'rgba(255,255,255,0.12)',
-                  backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(255,255,255,0.3)',
-                  boxShadow: '0 0 32px rgba(198,167,105,0.18)',
-                }}
-              >
-                <div
-                  className="ml-[8%]"
-                  style={{
-                    width: 0, height: 0,
-                    borderTop: '7px solid transparent',
-                    borderBottom: '7px solid transparent',
-                    borderLeft: '13px solid white',
-                  }}
-                />
-              </div>
-            </div>
-          </button>
-
-          {/* Scroll hint */}
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 pointer-events-none">
-            <p className="font-inter text-[9px] tracking-widest uppercase text-center" style={{ color: 'rgba(255,255,255,0.18)' }}>
-              Scroll to reveal
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Video Modal */}
-      <AnimatePresence>
-        {videoModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-[9999] flex items-center justify-center p-4 md:p-10"
-            style={{ background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(14px)' }}
-            onClick={(e) => { if (e.target === e.currentTarget) setVideoModal(false); }}
-          >
-            <motion.div
-              initial={{ scale: 0.88, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.88, opacity: 0 }}
-              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-              className="relative w-full max-w-4xl rounded-2xl overflow-hidden"
-              style={{ aspectRatio: '16/9', boxShadow: '0 40px 100px rgba(0,0,0,0.7)' }}
-            >
-              <iframe
-                src="https://player.cloudinary.com/embed/?cloud_name=dww36nzdv&public_id=Teg-Section_vmiiap&autoplay=true&controls=true"
-                className="absolute inset-0 w-full h-full"
-                allow="autoplay; fullscreen; encrypted-media"
-                allowFullScreen
-              />
-            </motion.div>
-
-            {/* Close */}
-            <button
-              onClick={() => setVideoModal(false)}
-              className="absolute top-5 right-5 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110"
-              style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.18)' }}
-            >
-              <X className="w-5 h-5 text-white" />
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* ===== TESTIMONIAL STRIP ===== */}
       <section className="bg-white py-12 overflow-hidden border-y border-light">
         <div className="flex animate-[marquee_30s_linear_infinite] whitespace-nowrap">
@@ -768,9 +821,7 @@ export default function HomePage() {
           <AnimatedSection>
             <div className="inline-flex items-center gap-2 bg-gold/10 border border-gold/20 px-4 py-2 rounded-full mb-8">
               <Star className="w-3.5 h-3.5 text-gold fill-gold" />
-              <span className="font-inter text-xs text-gold tracking-widest uppercase">
-                Let&apos;s Create Together
-              </span>
+              <span className="font-inter text-xs text-gold tracking-widest uppercase">Let&apos;s Create Together</span>
             </div>
 
             <h2 className="font-playfair text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">

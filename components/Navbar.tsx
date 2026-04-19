@@ -101,7 +101,7 @@ export default function Navbar() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: '100%' }}
             transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed inset-0 z-40 bg-dark/98 backdrop-blur-xl flex flex-col pt-24 px-8"
+            className="fixed inset-0 z-40 bg-dark flex flex-col pt-24 px-8"
           >
             <nav className="flex flex-col gap-6">
               {navLinks.map((link, i) => (
@@ -114,7 +114,7 @@ export default function Navbar() {
                   <Link
                     href={link.href}
                     className={`font-playfair text-3xl font-medium transition-colors duration-300 ${
-                      pathname === link.href ? 'text-gold' : 'text-white/80 hover:text-gold'
+                      pathname === link.href ? 'text-gold' : 'text-white hover:text-gold'
                     }`}
                   >
                     {link.label}

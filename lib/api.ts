@@ -6,23 +6,17 @@ const ADMIN_KEY = 'teg-admin-2024';
 export const api = axios.create({
   baseURL: API_URL,
   timeout: 15000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  headers: { 'Content-Type': 'application/json' },
 });
 
-// Request interceptor to add admin key for admin operations
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
     const isAdmin = localStorage.getItem('teg_admin_auth') === 'true';
-    if (isAdmin) {
-      config.headers['x-admin-key'] = ADMIN_KEY;
-    }
+    if (isAdmin) config.headers['x-admin-key'] = ADMIN_KEY;
   }
   return config;
 });
 
-// Response interceptor for error handling
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -35,7 +29,10 @@ export interface Product {
   _id: string;
   title: string;
   slug: string;
-  category: 'Birthday' | 'Wedding' | 'Anniversary' | 'Corporate' | 'Baby Shower' | 'Engagement' | 'Other';
+  section?: 'Social & Home Celebrations' | 'Signature Events';
+  category: string;
+  subCategory?: string;
+  gender?: 'Male' | 'Female' | 'Unisex';
   price: number;
   discount: number;
   images: string[];
@@ -49,6 +46,9 @@ export interface Product {
 
 export interface ProductFilters {
   category?: string;
+  section?: string;
+  subCategory?: string;
+  gender?: string;
   budgetTag?: string;
   minPrice?: number;
   maxPrice?: number;
@@ -69,9 +69,7 @@ export interface ProductsResponse {
 export const getProducts = async (filters: ProductFilters = {}): Promise<ProductsResponse> => {
   const params: Record<string, string | number | boolean> = {};
   Object.entries(filters).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== '') {
-      params[key] = value;
-    }
+    if (value !== undefined && value !== null && value !== '') params[key] = value;
   });
   const response = await api.get('/api/products', { params });
   return response.data;
@@ -83,23 +81,17 @@ export const getProduct = async (id: string): Promise<{ success: boolean; data: 
 };
 
 export const createProduct = async (data: Partial<Product>): Promise<{ success: boolean; data: Product }> => {
-  const response = await api.post('/api/products', data, {
-    headers: { 'x-admin-key': ADMIN_KEY },
-  });
+  const response = await api.post('/api/products', data, { headers: { 'x-admin-key': ADMIN_KEY } });
   return response.data;
 };
 
 export const updateProduct = async (id: string, data: Partial<Product>): Promise<{ success: boolean; data: Product }> => {
-  const response = await api.put(`/api/products/${id}`, data, {
-    headers: { 'x-admin-key': ADMIN_KEY },
-  });
+  const response = await api.put(`/api/products/${id}`, data, { headers: { 'x-admin-key': ADMIN_KEY } });
   return response.data;
 };
 
 export const deleteProduct = async (id: string): Promise<{ success: boolean; message: string }> => {
-  const response = await api.delete(`/api/products/${id}`, {
-    headers: { 'x-admin-key': ADMIN_KEY },
-  });
+  const response = await api.delete(`/api/products/${id}`, { headers: { 'x-admin-key': ADMIN_KEY } });
   return response.data;
 };
 
@@ -107,21 +99,13 @@ export const uploadImages = async (files: File[]): Promise<{ success: boolean; u
   const formData = new FormData();
   files.forEach((file) => formData.append('images', file));
   const response = await api.post('/api/upload', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-      'x-admin-key': ADMIN_KEY,
-    },
+    headers: { 'Content-Type': 'multipart/form-data', 'x-admin-key': ADMIN_KEY },
   });
   return response.data;
 };
 
-export const formatPrice = (price: number): string => {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 0,
-  }).format(price);
-};
+export const formatPrice = (price: number): string =>
+  new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(price);
 
 export const getDiscountedPrice = (price: number, discount: number): number => {
   if (!discount || discount === 0) return price;

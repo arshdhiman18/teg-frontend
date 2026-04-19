@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { ArrowUpRight, Star } from 'lucide-react';
+import { ArrowUpRight, Star, ImageOff } from 'lucide-react';
 import { Product, formatPrice, getDiscountedPrice } from '@/lib/api';
 
 interface ProductCardProps {
@@ -29,7 +29,7 @@ const categoryColors: Record<string, string> = {
 export default function ProductCard({ product }: ProductCardProps) {
   const discountedPrice = getDiscountedPrice(product.price, product.discount);
   const hasDiscount = product.discount > 0;
-  const imageUrl = product.images?.[0] || 'https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=80';
+  const imageUrl = product.images?.[0] || null;
 
   return (
     <motion.div
@@ -41,17 +41,25 @@ export default function ProductCard({ product }: ProductCardProps) {
     >
       <Link href={`/product/${product.slug || product._id}`}>
         {/* Image Container */}
-        <div className="relative overflow-hidden aspect-[4/3]">
-          <Image
-            src={imageUrl}
-            alt={product.title}
-            fill
-            className="object-cover transition-transform duration-700 group-hover:scale-[1.08]"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          />
-
-          {/* Overlay on hover */}
-          <div className="absolute inset-0 bg-dark/0 group-hover:bg-dark/20 transition-all duration-500" />
+        <div className="relative overflow-hidden aspect-[4/3] bg-light">
+          {imageUrl ? (
+            <>
+              <Image
+                src={imageUrl}
+                alt={product.title}
+                fill
+                className="object-cover transition-transform duration-700 group-hover:scale-[1.08]"
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              />
+              {/* Overlay on hover */}
+              <div className="absolute inset-0 bg-dark/0 group-hover:bg-dark/20 transition-all duration-500" />
+            </>
+          ) : (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-light to-dark/5">
+              <ImageOff className="w-10 h-10 text-dark/20" />
+              <span className="font-inter text-xs text-dark/30">No image yet</span>
+            </div>
+          )}
 
           {/* Category Badge */}
           <div className="absolute top-3 left-3">
