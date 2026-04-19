@@ -61,7 +61,6 @@ function FilterPanel({
   onClear: () => void;
   onClose: () => void;
 }) {
-  const subCats = filters.category.length === 1 ? getSubCategories(filters.category[0]) : [];
 
   const pill = (active: boolean, accent?: 'gold' | 'blue' | 'green') =>
     active
@@ -159,30 +158,6 @@ function FilterPanel({
               ))}
           </div>
         </div>
-
-        {/* Sub-category (only when parent has subs) */}
-        {subCats.length > 0 && (
-          <div>
-            <p className="font-inter font-semibold text-xs text-dark/50 uppercase tracking-wider mb-3">Sub-category</p>
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => onChange({ subCategory: '' })}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-inter font-medium transition-all duration-200 border ${pill(!filters.subCategory)}`}
-              >
-                All
-              </button>
-              {subCats.map((sub) => (
-                <button
-                  key={sub}
-                  onClick={() => onChange({ subCategory: filters.subCategory === sub ? '' : sub })}
-                  className={`px-3.5 py-1.5 rounded-full text-xs font-inter font-medium transition-all duration-200 border ${pill(filters.subCategory === sub)}`}
-                >
-                  {sub}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Gender */}
         <div>
@@ -284,6 +259,7 @@ function CollectionsContent() {
 
   const activeCount = countActiveFilters(filters);
   const hasSearch = !!filters.search;
+  const inlineSubCats = filters.category.length === 1 ? getSubCategories(filters.category[0]) : [];
 
   useEffect(() => {
     document.documentElement.style.overflow = showFilters ? 'hidden' : '';
@@ -392,6 +368,35 @@ function CollectionsContent() {
             </button>
           )}
         </div>
+
+        {/* Inline subcategory tabs — visible when a single category with subs is selected */}
+        {inlineSubCats.length > 0 && (
+          <div className="mb-5">
+            <div className="flex items-center gap-2 overflow-x-auto [&::-webkit-scrollbar]:hidden pb-1" style={{ scrollbarWidth: 'none' }}>
+              <span className="font-inter text-[10px] text-dark/35 uppercase tracking-widest shrink-0">Style</span>
+              <div className="w-px h-4 bg-dark/10 shrink-0" />
+              <button
+                onClick={() => patchFilters({ subCategory: '' })}
+                className={`px-4 py-1.5 rounded-full text-xs font-inter font-medium transition-all duration-200 border shrink-0 ${
+                  !filters.subCategory ? 'bg-dark text-white border-dark' : 'bg-white text-dark/55 border-dark/12 hover:border-dark/30 hover:text-dark'
+                }`}
+              >
+                All
+              </button>
+              {inlineSubCats.map((sub) => (
+                <button
+                  key={sub}
+                  onClick={() => patchFilters({ subCategory: filters.subCategory === sub ? '' : sub })}
+                  className={`px-4 py-1.5 rounded-full text-xs font-inter font-medium transition-all duration-200 border shrink-0 ${
+                    filters.subCategory === sub ? 'bg-dark text-white border-dark' : 'bg-white text-dark/55 border-dark/12 hover:border-dark/30 hover:text-dark'
+                  }`}
+                >
+                  {sub}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Active filter chips */}
         {allActiveChips.length > 0 && (
