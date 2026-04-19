@@ -100,6 +100,7 @@ export const uploadImages = async (files: File[]): Promise<{ success: boolean; u
   files.forEach((file) => formData.append('images', file));
   const response = await api.post('/api/upload', formData, {
     headers: { 'Content-Type': 'multipart/form-data', 'x-admin-key': ADMIN_KEY },
+    timeout: 90000,
   });
   return response.data;
 };
