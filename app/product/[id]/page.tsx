@@ -167,10 +167,19 @@ export default function ProductPage() {
                     src={images[selectedImage]}
                     alt={`${product.title} - image ${selectedImage + 1}`}
                     fill
-                    className="object-cover"
+                    className="object-contain"
                     priority
                     sizes="(max-width: 1024px) 100vw, 60vw"
                   />
+                  {/* Watermark */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <img
+                      src="/teg-logo.png"
+                      alt=""
+                      className="w-40 h-40 object-contain select-none"
+                      style={{ opacity: 0.40 }}
+                    />
+                  </div>
                 </motion.div>
               </AnimatePresence>
 
