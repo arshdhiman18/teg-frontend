@@ -105,6 +105,45 @@ export const uploadImages = async (files: File[]): Promise<{ success: boolean; u
   return response.data;
 };
 
+export interface Category {
+  _id: string;
+  name: string;
+  section: 'Social & Home Celebrations' | 'Signature Events';
+  subCategories: string[];
+  image: string | null;
+  tagline: string;
+  detail: string;
+  accent: string;
+  gradientFrom: string;
+  gradientTo: string;
+  order: number;
+}
+
+export const getCategories = async (): Promise<{ success: boolean; data: Category[] }> => {
+  const response = await api.get('/api/categories');
+  return response.data;
+};
+
+export const getActiveCategories = async (): Promise<{ success: boolean; data: Category[] }> => {
+  const response = await api.get('/api/categories/active');
+  return response.data;
+};
+
+export const createCategory = async (data: Partial<Category>): Promise<{ success: boolean; data: Category }> => {
+  const response = await api.post('/api/categories', data, { headers: { 'x-admin-key': ADMIN_KEY } });
+  return response.data;
+};
+
+export const updateCategory = async (id: string, data: Partial<Category>): Promise<{ success: boolean; data: Category }> => {
+  const response = await api.put(`/api/categories/${id}`, data, { headers: { 'x-admin-key': ADMIN_KEY } });
+  return response.data;
+};
+
+export const deleteCategory = async (id: string): Promise<{ success: boolean; message: string }> => {
+  const response = await api.delete(`/api/categories/${id}`, { headers: { 'x-admin-key': ADMIN_KEY } });
+  return response.data;
+};
+
 export const formatPrice = (price: number): string =>
   new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(price);
 

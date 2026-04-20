@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence, useInView, useScroll, useTransform, type MotionValue } from 'framer-motion';
 import {
@@ -14,7 +14,9 @@ import {
   X,
   Gem,
   Home,
+  Loader2,
 } from 'lucide-react';
+import { getActiveCategories, type Category } from '@/lib/api';
 
 const storyCards = [
   {
@@ -47,154 +49,6 @@ const storyCards = [
   },
 ];
 
-const SOCIAL_CATEGORIES = [
-  {
-    num: '01',
-    label: 'Birthday Decor',
-    tagline: 'Turn another year into a legendary celebration',
-    detail: 'Balloon arches · Neon signs · Floral walls',
-    href: '/collections?mainCategory=Birthday+Decor',
-    from: '#1a0a2e',
-    to: '#2d1547',
-    accent: '#e879f9',
-    img: 'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=400&h=600&fit=crop&q=80',
-  },
-  {
-    num: '02',
-    label: 'Anniversary Decor',
-    tagline: 'Celebrate years of love',
-    detail: 'Intimate setups · Rose showers · Candlelight',
-    href: '/collections?mainCategory=Anniversary+Decor',
-    from: '#2d1a1a',
-    to: '#1a0d0d',
-    accent: '#f87171',
-    img: 'https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?w=400&h=600&fit=crop&q=80',
-  },
-  {
-    num: '03',
-    label: 'Baby Shower',
-    tagline: 'Welcome little wonders',
-    detail: 'Pastel themes · Balloon clouds · Floral arches',
-    href: '/collections?mainCategory=Baby+Shower',
-    from: '#0d1f18',
-    to: '#071410',
-    accent: '#86efac',
-    img: 'https://images.unsplash.com/photo-1555252333-9f8e92e65df9?w=400&h=600&fit=crop&q=80',
-  },
-  {
-    num: '04',
-    label: 'Newborn Welcome',
-    tagline: 'First hello, forever memory',
-    detail: 'Cozy setups · Soft pastels · Photo corners',
-    href: '/collections?mainCategory=Newborn+Welcome',
-    from: '#1a1a2d',
-    to: '#0d0d1a',
-    accent: '#c4b5fd',
-    img: 'https://images.unsplash.com/photo-1491013516836-7db643ee125a?w=400&h=600&fit=crop&q=80',
-  },
-  {
-    num: '05',
-    label: 'Proposal Setup',
-    tagline: 'The moment that changes everything',
-    detail: 'Candles · Petal showers · Fairy lights',
-    href: '/collections?mainCategory=Proposal+%2F+Romantic+Setup',
-    from: '#2a1a2d',
-    to: '#1a0d1f',
-    accent: '#c084fc',
-    img: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=400&h=600&fit=crop&q=80',
-  },
-  {
-    num: '06',
-    label: 'Bachelor / Bachelorette',
-    tagline: 'Last night of freedom, legendary',
-    detail: 'Neon vibes · Party décor · Theme nights',
-    href: '/collections?mainCategory=Bachelor+%2F+Bachelorette',
-    from: '#1a0a1a',
-    to: '#0d040d',
-    accent: '#f472b6',
-    img: 'https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=400&h=600&fit=crop&q=80',
-  },
-  {
-    num: '07',
-    label: 'Wedding & Traditional',
-    tagline: 'Where forever begins',
-    detail: 'Mandaps · Floral drapes · Fairy lights',
-    href: '/collections?mainCategory=Wedding+%26+Traditional+Events',
-    from: '#1F3D3A',
-    to: '#0d1f1c',
-    accent: '#C6A769',
-    img: 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=400&h=600&fit=crop&q=80',
-  },
-  {
-    num: '08',
-    label: 'Specialized Setups',
-    tagline: 'Every detail, uniquely perfected',
-    detail: 'Thematic · Floral · Traditional · Kids',
-    href: '/collections?mainCategory=Specialized+Setups',
-    from: '#0f1a2e',
-    to: '#0a1020',
-    accent: '#60a5fa',
-    img: 'https://images.unsplash.com/photo-1478146896981-b80fe463b330?w=400&h=600&fit=crop&q=80',
-  },
-];
-
-const SIGNATURE_CATEGORIES = [
-  {
-    num: '01',
-    label: 'Luxury Social Events',
-    tagline: 'Elegance, elevated',
-    detail: 'Grand setups · VIP experiences · Bespoke design',
-    href: '/collections?mainCategory=Luxury+Social+Events',
-    from: '#1F3D3A',
-    to: '#0d1f1c',
-    accent: '#C6A769',
-    img: 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=400&h=600&fit=crop&q=80',
-  },
-  {
-    num: '02',
-    label: 'Wedding Experiences',
-    tagline: 'A wedding unlike any other',
-    detail: 'Destination · Luxury mandaps · Full design',
-    href: '/collections?mainCategory=Wedding+Experiences',
-    from: '#2d1a1a',
-    to: '#1a0d0d',
-    accent: '#fbbf24',
-    img: 'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=400&h=600&fit=crop&q=80',
-  },
-  {
-    num: '03',
-    label: 'Experiential Events',
-    tagline: 'Immersive. Unforgettable.',
-    detail: 'Club nights · Comedy · Workshops',
-    href: '/collections?mainCategory=Experiential+Events',
-    from: '#1a0a2e',
-    to: '#2d1547',
-    accent: '#a78bfa',
-    img: 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=400&h=600&fit=crop&q=80',
-  },
-  {
-    num: '04',
-    label: 'Corporate Events',
-    tagline: 'Impress. Inspire. Elevate.',
-    detail: 'Brand setups · Awards nights · Team events',
-    href: '/collections?mainCategory=Corporate+Events',
-    from: '#0f1a2e',
-    to: '#0a1020',
-    accent: '#60a5fa',
-    img: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=600&fit=crop&q=80',
-  },
-  {
-    num: '05',
-    label: 'Spiritual Gatherings',
-    tagline: 'Sacred spaces, beautifully created',
-    detail: 'Pujas · Ceremonies · Traditional décor',
-    href: '/collections?mainCategory=Spiritual+Gatherings',
-    from: '#2d1a0a',
-    to: '#1a0d05',
-    accent: '#fb923c',
-    img: 'https://images.unsplash.com/photo-1561386369-8b3a51aefd14?w=400&h=600&fit=crop&q=80',
-  },
-];
 
 const whyTEG = [
   {
@@ -267,9 +121,21 @@ export default function HomePage() {
   // Categories section state
   const [activeTab, setActiveTab] = useState<'social' | 'signature'>('social');
   const [catIndex, setCatIndex] = useState(0);
+  const [allCategories, setAllCategories] = useState<Category[]>([]);
+  const [catsLoading, setCatsLoading] = useState(true);
   const CAT_VISIBLE = 3;
-  const CARD_STEP = 320; // card width (300) + gap (20)
-  const activeCategories = activeTab === 'social' ? SOCIAL_CATEGORIES : SIGNATURE_CATEGORIES;
+  const CARD_STEP = 320;
+
+  useEffect(() => {
+    getActiveCategories()
+      .then((res) => setAllCategories(res.data))
+      .catch(() => {})
+      .finally(() => setCatsLoading(false));
+  }, []);
+
+  const socialCats = allCategories.filter((c) => c.section === 'Social & Home Celebrations');
+  const signatureCats = allCategories.filter((c) => c.section === 'Signature Events');
+  const activeCategories = activeTab === 'social' ? socialCats : signatureCats;
   const catMaxIndex = Math.max(0, activeCategories.length - CAT_VISIBLE);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -501,42 +367,53 @@ export default function HomePage() {
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                <div className="flex gap-5 pb-1">
-                  {activeCategories.map((cat, i) => (
-                    <Link key={i} href={cat.href} className="flex-shrink-0">
-                      <motion.div
-                        className="relative rounded-2xl cursor-pointer group"
-                        style={{ width: '300px', height: 'clamp(380px, 52vh, 500px)', willChange: 'transform' }}
-                        whileHover={{ scale: 1.02, y: -5 }}
-                        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                      >
-                        {/* Inner clip so overflow-hidden doesn't fight the scale transform */}
-                        <div className="absolute inset-0 overflow-hidden rounded-2xl">
-                          <img
-                            src={cat.img}
-                            alt={cat.label}
-                            className="absolute inset-0 w-full h-full object-cover"
-                            loading="lazy"
-                          />
-                          <div className="absolute inset-0" style={{ background: `linear-gradient(155deg, ${cat.from}88, ${cat.to}aa)` }} />
-                          <div className="absolute top-0 left-6 right-6 h-px" style={{ background: `linear-gradient(90deg, transparent, ${cat.accent}60, transparent)` }} />
-                          <div className="absolute top-5 left-6 font-cormorant leading-none select-none pointer-events-none" style={{ fontSize: '5.5rem', fontWeight: 300, color: 'rgba(255,255,255,0.07)' }}>{cat.num}</div>
-                          <div className="absolute bottom-0 left-0 right-0 p-6" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.88) 0%, transparent 100%)' }}>
-                            <p className="font-inter text-[9px] tracking-[0.2em] uppercase mb-2.5" style={{ color: cat.accent, opacity: 0.85 }}>{cat.detail}</p>
-                            <h3 className="font-cormorant text-white leading-none mb-2" style={{ fontSize: '2.1rem', fontWeight: 300 }}>{cat.label}</h3>
-                            <p className="font-inter text-xs text-white/40 mb-5 leading-relaxed">{cat.tagline}</p>
-                            <div className="flex items-center gap-2" style={{ color: cat.accent, opacity: 0.55 }}>
-                              <span className="font-inter text-[9px] tracking-widest uppercase group-hover:opacity-100 transition-opacity duration-300">Explore Setups</span>
-                              <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform duration-300" />
+                {catsLoading ? (
+                  <div className="flex items-center justify-center py-24 w-full">
+                    <Loader2 className="w-6 h-6 text-primary animate-spin" />
+                  </div>
+                ) : activeCategories.length === 0 ? (
+                  <div className="flex items-center justify-center py-24 w-full">
+                    <p className="font-inter text-sm text-dark/40">No events in this section yet</p>
+                  </div>
+                ) : (
+                  <div className="flex gap-5 pb-1">
+                    {activeCategories.map((cat, i) => {
+                      const href = `/collections?mainCategory=${encodeURIComponent(cat.name)}`;
+                      const num = String(i + 1).padStart(2, '0');
+                      return (
+                        <Link key={cat._id} href={href} className="flex-shrink-0">
+                          <motion.div
+                            className="relative rounded-2xl cursor-pointer group"
+                            style={{ width: '300px', height: 'clamp(380px, 52vh, 500px)', willChange: 'transform' }}
+                            whileHover={{ scale: 1.02, y: -5 }}
+                            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                          >
+                            <div className="absolute inset-0 overflow-hidden rounded-2xl">
+                              {cat.image ? (
+                                <img src={cat.image} alt={cat.name} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+                              ) : (
+                                <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${cat.gradientFrom}, ${cat.gradientTo})` }} />
+                              )}
+                              <div className="absolute inset-0" style={{ background: `linear-gradient(155deg, ${cat.gradientFrom}88, ${cat.gradientTo}aa)` }} />
+                              <div className="absolute top-0 left-6 right-6 h-px" style={{ background: `linear-gradient(90deg, transparent, ${cat.accent}60, transparent)` }} />
+                              <div className="absolute top-5 left-6 font-cormorant leading-none select-none pointer-events-none" style={{ fontSize: '5.5rem', fontWeight: 300, color: 'rgba(255,255,255,0.07)' }}>{num}</div>
+                              <div className="absolute bottom-0 left-0 right-0 p-6" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.88) 0%, transparent 100%)' }}>
+                                {cat.detail && <p className="font-inter text-[9px] tracking-[0.2em] uppercase mb-2.5" style={{ color: cat.accent, opacity: 0.85 }}>{cat.detail}</p>}
+                                <h3 className="font-cormorant text-white leading-none mb-2" style={{ fontSize: '2.1rem', fontWeight: 300 }}>{cat.name}</h3>
+                                {cat.tagline && <p className="font-inter text-xs text-white/40 mb-5 leading-relaxed">{cat.tagline}</p>}
+                                <div className="flex items-center gap-2" style={{ color: cat.accent, opacity: 0.55 }}>
+                                  <span className="font-inter text-[9px] tracking-widest uppercase group-hover:opacity-100 transition-opacity duration-300">Explore Setups</span>
+                                  <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform duration-300" />
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        </div>
-                        {/* Accent border ring sits outside the clip so it's never cropped */}
-                        <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style={{ boxShadow: `inset 0 0 0 1px ${cat.accent}45` }} />
-                      </motion.div>
-                    </Link>
-                  ))}
-                </div>
+                            <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style={{ boxShadow: `inset 0 0 0 1px ${cat.accent}45` }} />
+                          </motion.div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
               </motion.div>
             </AnimatePresence>
           </div>

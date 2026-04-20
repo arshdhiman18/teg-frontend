@@ -19,8 +19,9 @@ import {
   Eye,
   LogOut,
   AlertTriangle,
-  Database,
-  RefreshCw,
+  Tag,
+  ImagePlus,
+  Copy,
 } from 'lucide-react';
 import {
   getProducts,
@@ -30,14 +31,13 @@ import {
   uploadImages,
   formatPrice,
   Product,
+  getCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+  Category,
 } from '@/lib/api';
-import {
-  SECTIONS,
-  CATEGORY_STRUCTURE,
-  GENDER_OPTIONS,
-  BUDGET_TAGS,
-  getSubCategories,
-} from '@/lib/categories';
+import { GENDER_OPTIONS, BUDGET_TAGS } from '@/lib/categories';
 
 const emptyForm = {
   title: '',
@@ -141,7 +141,23 @@ export default function AdminPage() {
 }
 
 // ── Dashboard ──────────────────────────────────────────────────────────────
+const SECTIONS_LIST = ['Social & Home Celebrations', 'Signature Events'] as const;
+const ACCENT_PRESETS = ['#C6A769', '#e879f9', '#f87171', '#86efac', '#c4b5fd', '#c084fc', '#f472b6', '#60a5fa', '#fbbf24', '#fb923c', '#a78bfa'];
+
+const emptyCatForm = {
+  name: '',
+  section: 'Social & Home Celebrations' as string,
+  subCategories: [''] as string[],
+  tagline: '',
+  detail: '',
+  accent: '#C6A769',
+  image: null as string | null,
+};
+
 function AdminDashboard({ onLogout }: { onLogout: () => void }) {
+  const [activeTab, setActiveTab] = useState<'products' | 'categories'>('products');
+
+  // Products state
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -154,20 +170,29 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [successMsg, setSuccessMsg] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [seedLoading, setSeedLoading] = useState(false);
-  const [showSeedConfirm, setShowSeedConfirm] = useState(false);
+  // Categories state
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [catsLoading, setCatsLoading] = useState(true);
+  const [showCatForm, setShowCatForm] = useState(false);
+  const [editingCat, setEditingCat] = useState<Category | null>(null);
+  const [catFormData, setCatFormData] = useState({ ...emptyCatForm });
+  const [catFormLoading, setCatFormLoading] = useState(false);
+  const [catUploadLoading, setCatUploadLoading] = useState(false);
+  const [catFormError, setCatFormError] = useState('');
+  const [deleteCatConfirm, setDeleteCatConfirm] = useState<string | null>(null);
+  const catFileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => { fetchProducts(); }, []);
+  useEffect(() => { fetchProducts(); fetchCategories(); }, []);
 
   useEffect(() => {
-    const open = showForm || !!deleteConfirm || showSeedConfirm;
+    const open = showForm || !!deleteConfirm || showCatForm || !!deleteCatConfirm;
     document.documentElement.style.overflow = open ? 'hidden' : '';
     document.body.style.overflow = open ? 'hidden' : '';
     return () => {
       document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
     };
-  }, [showForm, deleteConfirm, showSeedConfirm]);
+  }, [showForm, deleteConfirm, showCatForm, deleteCatConfirm]);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -186,25 +211,92 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     setTimeout(() => setSuccessMsg(''), 3000);
   };
 
-  const handleSeed = async () => {
-    setSeedLoading(true);
-    setShowSeedConfirm(false);
+  const fetchCategories = async () => {
+    setCatsLoading(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/seed`, {
-        method: 'POST',
-        headers: { 'x-admin-key': 'teg-admin-2024' },
-      });
-      const data = await res.json();
-      if (data.success) {
-        showSuccess(`Seeded ${data.data?.length ?? 0} demo products`);
-        fetchProducts();
-      } else {
-        alert('Seed failed: ' + data.message);
-      }
+      const res = await getCategories();
+      setCategories(res.data);
     } catch (err: any) {
-      alert('Seed error: ' + err.message);
+      console.error(err.message);
     } finally {
-      setSeedLoading(false);
+      setCatsLoading(false);
+    }
+  };
+
+  const openAddCatForm = () => {
+    setEditingCat(null);
+    setCatFormData({ ...emptyCatForm });
+    setCatFormError('');
+    setShowCatForm(true);
+  };
+
+  const openEditCatForm = (cat: Category) => {
+    setEditingCat(cat);
+    setCatFormData({
+      name: cat.name,
+      section: cat.section,
+      subCategories: cat.subCategories.length ? cat.subCategories : [''],
+      tagline: cat.tagline || '',
+      detail: cat.detail || '',
+      accent: cat.accent || '#C6A769',
+      image: cat.image || null,
+    });
+    setCatFormError('');
+    setShowCatForm(true);
+  };
+
+  const handleCatImageUpload = async (files: FileList) => {
+    if (!files.length) return;
+    setCatUploadLoading(true);
+    try {
+      const res = await uploadImages([files[0]]);
+      setCatFormData((prev) => ({ ...prev, image: res.urls[0] }));
+    } catch (err: any) {
+      setCatFormError('Image upload failed: ' + err.message);
+    } finally {
+      setCatUploadLoading(false);
+    }
+  };
+
+  const handleCatSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCatFormLoading(true);
+    setCatFormError('');
+    const payload = {
+      name: catFormData.name.trim(),
+      section: catFormData.section,
+      subCategories: catFormData.subCategories.filter((s) => s.trim()),
+      tagline: catFormData.tagline.trim(),
+      detail: catFormData.detail.trim(),
+      accent: catFormData.accent,
+      image: catFormData.image || null,
+    };
+    try {
+      if (editingCat) {
+        const res = await updateCategory(editingCat._id, payload);
+        setCategories((prev) => prev.map((c) => (c._id === editingCat._id ? res.data : c)));
+        showSuccess('Category updated');
+      } else {
+        const res = await createCategory(payload);
+        setCategories((prev) => [...prev, res.data]);
+        showSuccess('Category created');
+      }
+      setShowCatForm(false);
+    } catch (err: any) {
+      setCatFormError(err.message || 'Something went wrong');
+    } finally {
+      setCatFormLoading(false);
+    }
+  };
+
+  const handleDeleteCat = async (id: string) => {
+    try {
+      await deleteCategory(id);
+      setCategories((prev) => prev.filter((c) => c._id !== id));
+      setDeleteCatConfirm(null);
+      showSuccess('Category deleted');
+    } catch (err: any) {
+      alert(err.message);
     }
   };
 
@@ -219,6 +311,27 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     setEditingProduct(product);
     setFormData({
       title: product.title,
+      section: product.section || '',
+      category: product.category,
+      subCategory: product.subCategory || '',
+      gender: product.gender || 'Unisex',
+      price: String(product.price),
+      discount: String(product.discount || 0),
+      budgetTag: product.budgetTag,
+      description: product.description || '',
+      includes: product.includes?.length ? product.includes : [''],
+      excludes: product.excludes?.length ? product.excludes : [''],
+      featured: product.featured || false,
+      images: product.images || [],
+    });
+    setFormError('');
+    setShowForm(true);
+  };
+
+  const openDuplicateForm = (product: Product) => {
+    setEditingProduct(null);
+    setFormData({
+      title: product.title + ' (Copy)',
       section: product.section || '',
       category: product.category,
       subCategory: product.subCategory || '',
@@ -315,12 +428,12 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     featured: products.filter((p) => p.featured).length,
   };
 
-  // Dynamic subcategories based on current form selection
+  // Dynamic categories from DB
   const availableCategories = formData.section
-    ? Object.keys(CATEGORY_STRUCTURE[formData.section as keyof typeof CATEGORY_STRUCTURE] || {})
-    : Object.values(CATEGORY_STRUCTURE).flatMap((cats) => Object.keys(cats));
+    ? categories.filter((c) => c.section === formData.section).map((c) => c.name)
+    : categories.map((c) => c.name);
 
-  const availableSubCategories = getSubCategories(formData.category);
+  const availableSubCategories = categories.find((c) => c.name === formData.category)?.subCategories || [];
 
   return (
     <div className="min-h-screen bg-light">
@@ -357,33 +470,27 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        {/* Seed demo data banner (shown when DB is empty) */}
-        {!loading && products.length === 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-gold/10 border border-gold/30 rounded-2xl px-5 py-4 flex items-center justify-between gap-4 mb-6"
+
+        {/* Tab switcher */}
+        <div className="flex items-center gap-1 bg-white rounded-2xl p-1 shadow-luxury mb-8 w-fit">
+          <button
+            onClick={() => setActiveTab('products')}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-inter text-sm font-medium transition-all duration-300 ${activeTab === 'products' ? 'bg-dark text-white shadow-sm' : 'text-dark/50 hover:text-dark'}`}
           >
-            <div className="flex items-center gap-3">
-              <Database className="w-5 h-5 text-gold shrink-0" />
-              <div>
-                <p className="font-inter font-semibold text-sm text-dark">No products yet</p>
-                <p className="font-inter text-xs text-dark/50">Load 18 demo products to preview the platform</p>
-              </div>
-            </div>
-            <button
-              onClick={() => setShowSeedConfirm(true)}
-              disabled={seedLoading}
-              className="flex items-center gap-2 btn-gold text-dark font-inter font-medium text-xs px-4 py-2.5 rounded-xl whitespace-nowrap"
-            >
-              {seedLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Database className="w-3.5 h-3.5" />}
-              Seed Demo Data
-            </button>
-          </motion.div>
-        )}
+            <Package className="w-4 h-4" />
+            Products
+          </button>
+          <button
+            onClick={() => setActiveTab('categories')}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-inter text-sm font-medium transition-all duration-300 ${activeTab === 'categories' ? 'bg-dark text-white shadow-sm' : 'text-dark/50 hover:text-dark'}`}
+          >
+            <Tag className="w-4 h-4" />
+            Categories
+          </button>
+        </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6 sm:mb-8">
           {[
             { label: 'Total Products', value: stats.total, icon: Package, color: 'bg-primary/10 text-primary' },
             { label: 'Sections Active', value: stats.sections, icon: LayoutDashboard, color: 'bg-gold/10 text-gold' },
@@ -391,39 +498,28 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           ].map((stat, i) => {
             const Icon = stat.icon;
             return (
-              <div key={i} className="bg-white rounded-2xl p-5 shadow-luxury">
-                <div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center mb-3`}>
-                  <Icon className="w-5 h-5" />
+              <div key={i} className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 shadow-luxury">
+                <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl ${stat.color} flex items-center justify-center mb-2 sm:mb-3`}>
+                  <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
-                <p className="font-playfair text-2xl font-bold text-dark">{stat.value}</p>
-                <p className="font-inter text-xs text-dark/50 mt-0.5">{stat.label}</p>
+                <p className="font-playfair text-xl sm:text-2xl font-bold text-dark">{stat.value}</p>
+                <p className="font-inter text-[10px] sm:text-xs text-dark/50 mt-0.5 leading-tight">{stat.label}</p>
               </div>
             );
           })}
         </div>
 
         {/* Products table */}
-        <div className="bg-white rounded-3xl shadow-luxury overflow-hidden">
+        {activeTab === 'products' && <div className="bg-white rounded-3xl shadow-luxury overflow-hidden">
           <div className="flex items-center justify-between px-6 py-5 border-b border-dark/5">
             <h2 className="font-playfair text-xl font-semibold text-dark">Products</h2>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setShowSeedConfirm(true)}
-                disabled={seedLoading}
-                title="Reset & load demo products"
-                className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl border border-dark/10 text-dark/40 hover:text-gold hover:border-gold/30 hover:bg-gold/5 font-inter text-xs transition-all"
-              >
-                {seedLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
-                Seed Demo
-              </button>
-              <button
-                onClick={openAddForm}
-                className="flex items-center gap-2 btn-gold text-dark font-inter font-medium text-sm px-4 py-2.5 rounded-xl"
-              >
-                <Plus className="w-4 h-4" />
-                Add Product
-              </button>
-            </div>
+            <button
+              onClick={openAddForm}
+              className="flex items-center gap-2 btn-gold text-dark font-inter font-medium text-sm px-4 py-2.5 rounded-xl"
+            >
+              <Plus className="w-4 h-4" />
+              Add Product
+            </button>
           </div>
 
           {loading ? (
@@ -437,153 +533,285 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               <button onClick={openAddForm} className="text-primary font-inter text-sm hover:underline">Add your first product</button>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-dark/5">
-                    <th className="text-left px-6 py-3 text-xs font-inter font-semibold text-dark/40 uppercase tracking-wide">Product</th>
-                    <th className="text-left px-4 py-3 text-xs font-inter font-semibold text-dark/40 uppercase tracking-wide hidden md:table-cell">Category</th>
-                    <th className="text-left px-4 py-3 text-xs font-inter font-semibold text-dark/40 uppercase tracking-wide hidden lg:table-cell">Section</th>
-                    <th className="text-left px-4 py-3 text-xs font-inter font-semibold text-dark/40 uppercase tracking-wide">Price</th>
-                    <th className="text-left px-4 py-3 text-xs font-inter font-semibold text-dark/40 uppercase tracking-wide hidden lg:table-cell">Tag</th>
-                    <th className="text-center px-4 py-3 text-xs font-inter font-semibold text-dark/40 uppercase tracking-wide hidden lg:table-cell">Featured</th>
-                    <th className="text-right px-6 py-3 text-xs font-inter font-semibold text-dark/40 uppercase tracking-wide">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {products.map((product, i) => (
-                    <motion.tr
-                      key={product._id}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: i * 0.03 }}
-                      className="border-b border-dark/5 hover:bg-light/50 transition-colors"
-                    >
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          {product.images?.[0] && (
-                            <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 relative">
-                              <Image src={product.images[0]} alt={product.title} fill className="object-cover" sizes="40px" />
+            <>
+              {/* Mobile card list */}
+              <div className="md:hidden divide-y divide-dark/5">
+                {products.map((product, i) => (
+                  <motion.div key={product._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }} className="flex items-center gap-3 px-4 py-3">
+                    {product.images?.[0] ? (
+                      <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 relative">
+                        <Image src={product.images[0]} alt={product.title} fill className="object-cover" sizes="48px" />
+                      </div>
+                    ) : (
+                      <div className="w-12 h-12 rounded-xl bg-light shrink-0 flex items-center justify-center">
+                        <Package className="w-5 h-5 text-dark/20" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-inter font-semibold text-dark text-sm line-clamp-1">{product.title}</p>
+                      <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                        <span className="font-inter text-[10px] text-dark/50 bg-light px-2 py-0.5 rounded-full">{product.category}</span>
+                        {product.featured && <Star className="w-3 h-3 text-gold fill-gold" />}
+                      </div>
+                      <p className="font-playfair font-bold text-gold text-sm mt-1">
+                        {formatPrice(product.price)}
+                        {product.discount > 0 && <span className="font-inter text-[10px] text-green-600 font-normal ml-1">-{product.discount}%</span>}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-0.5 shrink-0">
+                      <button onClick={() => openDuplicateForm(product)} className="p-2 rounded-lg text-dark/25 hover:text-primary hover:bg-primary/10 transition-all" title="Duplicate"><Copy className="w-3.5 h-3.5" /></button>
+                      <button onClick={() => openEditForm(product)} className="p-2 rounded-lg text-dark/25 hover:text-gold hover:bg-gold/10 transition-all"><Pencil className="w-3.5 h-3.5" /></button>
+                      <button onClick={() => setDeleteConfirm(product._id)} className="p-2 rounded-lg text-dark/25 hover:text-red-500 hover:bg-red-50 transition-all"><Trash2 className="w-3.5 h-3.5" /></button>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* Desktop table */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-dark/5">
+                      <th className="text-left px-6 py-3 text-xs font-inter font-semibold text-dark/40 uppercase tracking-wide">Product</th>
+                      <th className="text-left px-4 py-3 text-xs font-inter font-semibold text-dark/40 uppercase tracking-wide">Category</th>
+                      <th className="text-left px-4 py-3 text-xs font-inter font-semibold text-dark/40 uppercase tracking-wide hidden lg:table-cell">Section</th>
+                      <th className="text-left px-4 py-3 text-xs font-inter font-semibold text-dark/40 uppercase tracking-wide">Price</th>
+                      <th className="text-left px-4 py-3 text-xs font-inter font-semibold text-dark/40 uppercase tracking-wide hidden lg:table-cell">Tag</th>
+                      <th className="text-center px-4 py-3 text-xs font-inter font-semibold text-dark/40 uppercase tracking-wide hidden lg:table-cell">Featured</th>
+                      <th className="text-right px-6 py-3 text-xs font-inter font-semibold text-dark/40 uppercase tracking-wide">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {products.map((product, i) => (
+                      <motion.tr key={product._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }} className="border-b border-dark/5 hover:bg-light/50 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            {product.images?.[0] && (
+                              <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 relative">
+                                <Image src={product.images[0]} alt={product.title} fill className="object-cover" sizes="40px" />
+                              </div>
+                            )}
+                            <div>
+                              <p className="font-inter font-medium text-dark text-sm line-clamp-1">{product.title}</p>
+                              <p className="font-inter text-xs text-dark/40">{product.slug}</p>
                             </div>
-                          )}
-                          <div>
-                            <p className="font-inter font-medium text-dark text-sm line-clamp-1">{product.title}</p>
-                            <p className="font-inter text-xs text-dark/40">{product.slug}</p>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-4 hidden md:table-cell">
-                        <div>
+                        </td>
+                        <td className="px-4 py-4">
                           <span className="font-inter text-xs text-dark/70 bg-light px-2.5 py-1 rounded-full">{product.category}</span>
-                          {product.subCategory && (
-                            <p className="font-inter text-[10px] text-dark/35 mt-1 pl-0.5">{product.subCategory}</p>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-4 hidden lg:table-cell">
-                        {product.section ? (
-                          <span className={`font-inter text-[10px] px-2 py-1 rounded-full ${
-                            product.section === 'Signature Events'
-                              ? 'bg-gold/10 text-gold'
-                              : 'bg-primary/10 text-primary'
-                          }`}>
-                            {product.section === 'Signature Events' ? 'Signature' : 'Social'}
-                          </span>
-                        ) : (
-                          <span className="font-inter text-[10px] text-dark/30">—</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-4">
-                        <span className="font-inter font-semibold text-sm text-gold">{formatPrice(product.price)}</span>
-                        {product.discount > 0 && (
-                          <span className="font-inter text-xs text-green-600 ml-1.5">-{product.discount}%</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-4 hidden lg:table-cell">
-                        <span className={`text-xs font-inter px-2.5 py-1 rounded-full ${
-                          product.budgetTag === 'Luxury' ? 'bg-gold/10 text-gold' :
-                          product.budgetTag === 'Premium' ? 'bg-blue-50 text-blue-600' :
-                          'bg-green-50 text-green-600'
-                        }`}>
-                          {product.budgetTag}
-                        </span>
-                      </td>
-                      <td className="px-4 py-4 text-center hidden lg:table-cell">
-                        {product.featured
-                          ? <Star className="w-4 h-4 text-gold fill-gold mx-auto" />
-                          : <StarOff className="w-4 h-4 text-dark/20 mx-auto" />}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center justify-end gap-2">
-                          <a
-                            href={`/product/${product.slug || product._id}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-1.5 rounded-lg text-dark/30 hover:text-primary hover:bg-primary/10 transition-all"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </a>
-                          <button
-                            onClick={() => openEditForm(product)}
-                            className="p-1.5 rounded-lg text-dark/30 hover:text-gold hover:bg-gold/10 transition-all"
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => setDeleteConfirm(product._id)}
-                            className="p-1.5 rounded-lg text-dark/30 hover:text-red-500 hover:bg-red-50 transition-all"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </motion.tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                          {product.subCategory && <p className="font-inter text-[10px] text-dark/35 mt-1 pl-0.5">{product.subCategory}</p>}
+                        </td>
+                        <td className="px-4 py-4 hidden lg:table-cell">
+                          {product.section ? (
+                            <span className={`font-inter text-[10px] px-2 py-1 rounded-full ${product.section === 'Signature Events' ? 'bg-gold/10 text-gold' : 'bg-primary/10 text-primary'}`}>
+                              {product.section === 'Signature Events' ? 'Signature' : 'Social'}
+                            </span>
+                          ) : <span className="font-inter text-[10px] text-dark/30">—</span>}
+                        </td>
+                        <td className="px-4 py-4">
+                          <span className="font-inter font-semibold text-sm text-gold">{formatPrice(product.price)}</span>
+                          {product.discount > 0 && <span className="font-inter text-xs text-green-600 ml-1.5">-{product.discount}%</span>}
+                        </td>
+                        <td className="px-4 py-4 hidden lg:table-cell">
+                          <span className={`text-xs font-inter px-2.5 py-1 rounded-full ${product.budgetTag === 'Luxury' ? 'bg-gold/10 text-gold' : product.budgetTag === 'Premium' ? 'bg-blue-50 text-blue-600' : 'bg-green-50 text-green-600'}`}>{product.budgetTag}</span>
+                        </td>
+                        <td className="px-4 py-4 text-center hidden lg:table-cell">
+                          {product.featured ? <Star className="w-4 h-4 text-gold fill-gold mx-auto" /> : <StarOff className="w-4 h-4 text-dark/20 mx-auto" />}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center justify-end gap-2">
+                            <a href={`/product/${product.slug || product._id}`} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-lg text-dark/30 hover:text-primary hover:bg-primary/10 transition-all"><Eye className="w-4 h-4" /></a>
+                            <button onClick={() => openDuplicateForm(product)} className="p-1.5 rounded-lg text-dark/30 hover:text-primary hover:bg-primary/10 transition-all" title="Duplicate"><Copy className="w-4 h-4" /></button>
+                            <button onClick={() => openEditForm(product)} className="p-1.5 rounded-lg text-dark/30 hover:text-gold hover:bg-gold/10 transition-all"><Pencil className="w-4 h-4" /></button>
+                            <button onClick={() => setDeleteConfirm(product._id)} className="p-1.5 rounded-lg text-dark/30 hover:text-red-500 hover:bg-red-50 transition-all"><Trash2 className="w-4 h-4" /></button>
+                          </div>
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
-        </div>
+        </div>}
+
+        {/* Categories tab */}
+        {activeTab === 'categories' && (
+          <div className="bg-white rounded-3xl shadow-luxury overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-dark/5">
+              <h2 className="font-playfair text-xl font-semibold text-dark">Categories</h2>
+              <button onClick={openAddCatForm} className="flex items-center gap-2 btn-gold text-dark font-inter font-medium text-sm px-4 py-2.5 rounded-xl">
+                <Plus className="w-4 h-4" />
+                Add Category
+              </button>
+            </div>
+            {catsLoading ? (
+              <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 text-primary animate-spin" /></div>
+            ) : (
+              <div className="divide-y divide-dark/5">
+                {(['Social & Home Celebrations', 'Signature Events'] as const).map((section) => {
+                  const sectionCats = categories.filter((c) => c.section === section);
+                  return (
+                    <div key={section}>
+                      <div className="px-6 py-3 bg-light/60">
+                        <p className="font-inter text-xs font-semibold text-dark/40 uppercase tracking-wider">{section}</p>
+                      </div>
+                      {sectionCats.length === 0 ? (
+                        <p className="px-6 py-4 font-inter text-sm text-dark/30">No categories yet</p>
+                      ) : (
+                        sectionCats.map((cat) => (
+                          <div key={cat._id} className="flex items-center gap-4 px-6 py-4 hover:bg-light/40 transition-colors">
+                            <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0 relative bg-dark/5">
+                              {cat.image ? (
+                                <img src={cat.image} alt={cat.name} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${cat.gradientFrom}, ${cat.gradientTo})` }}>
+                                  <span className="w-2 h-2 rounded-full" style={{ background: cat.accent }} />
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-inter font-semibold text-sm text-dark">{cat.name}</p>
+                              <p className="font-inter text-xs text-dark/40 truncate">{cat.tagline || '—'}</p>
+                              {cat.subCategories.length > 0 && (
+                                <p className="font-inter text-[10px] text-dark/30 mt-0.5">{cat.subCategories.length} sub-categories</p>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <div className="w-3 h-3 rounded-full border border-dark/10" style={{ background: cat.accent }} title={cat.accent} />
+                              <button onClick={() => openEditCatForm(cat)} className="p-1.5 rounded-lg text-dark/30 hover:text-gold hover:bg-gold/10 transition-all ml-2">
+                                <Pencil className="w-4 h-4" />
+                              </button>
+                              <button onClick={() => setDeleteCatConfirm(cat._id)} className="p-1.5 rounded-lg text-dark/30 hover:text-red-500 hover:bg-red-50 transition-all">
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Seed confirm modal */}
+      {/* Delete category modal */}
       <AnimatePresence>
-        {showSeedConfirm && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-dark/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={() => setShowSeedConfirm(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="w-12 h-12 rounded-xl bg-gold/10 flex items-center justify-center mb-4">
-                <Database className="w-6 h-6 text-gold" />
-              </div>
-              <h3 className="font-playfair text-xl font-semibold text-dark mb-2">Seed Demo Data?</h3>
-              <p className="font-inter text-sm text-dark/60 mb-6">
-                This will <span className="font-semibold text-red-500">delete all existing products</span> and replace them with 18 demo products covering all new categories.
-              </p>
+        {deleteCatConfirm && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-dark/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setDeleteCatConfirm(null)}>
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl" onClick={(e) => e.stopPropagation()}>
+              <div className="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center mb-4"><AlertTriangle className="w-6 h-6 text-red-500" /></div>
+              <h3 className="font-playfair text-xl font-semibold text-dark mb-2">Delete Category?</h3>
+              <p className="font-inter text-sm text-dark/60 mb-6">Existing products in this category will not be deleted, but the category will no longer appear in dropdowns or on the landing page.</p>
               <div className="flex gap-3">
-                <button
-                  onClick={() => setShowSeedConfirm(false)}
-                  className="flex-1 py-3 rounded-xl border border-dark/10 font-inter text-sm text-dark/60 hover:bg-light transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSeed}
-                  className="flex-1 py-3 rounded-xl btn-gold text-dark font-inter font-medium text-sm transition-colors"
-                >
-                  Yes, Seed It
-                </button>
+                <button onClick={() => setDeleteCatConfirm(null)} className="flex-1 py-3 rounded-xl border border-dark/10 font-inter text-sm text-dark/60 hover:bg-light transition-colors">Cancel</button>
+                <button onClick={() => handleDeleteCat(deleteCatConfirm)} className="flex-1 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-inter font-medium text-sm transition-colors">Delete</button>
               </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Add/Edit category modal */}
+      <AnimatePresence>
+        {showCatForm && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-dark/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowCatForm(false)}>
+            <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0 }} transition={{ duration: 0.3 }} className="bg-white rounded-3xl w-full max-w-lg shadow-xl flex flex-col overflow-hidden" style={{ maxHeight: '90vh' }} onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between px-7 py-5 border-b border-dark/10 shrink-0">
+                <h2 className="font-playfair text-xl font-semibold text-dark">{editingCat ? 'Edit Category' : 'Add Category'}</h2>
+                <button onClick={() => setShowCatForm(false)} className="p-2 rounded-xl text-dark/30 hover:text-dark hover:bg-light transition-all"><X className="w-5 h-5" /></button>
+              </div>
+              <form onSubmit={handleCatSubmit} className="flex flex-col flex-1 min-h-0">
+                <div className="flex-1 overflow-y-auto min-h-0 p-7 space-y-6">
+                  {catFormError && <div className="flex items-center gap-2 bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm font-inter"><AlertTriangle className="w-4 h-4 shrink-0" />{catFormError}</div>}
+
+                  {/* Name */}
+                  <div>
+                    <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">Category Name *</label>
+                    <input required value={catFormData.name} onChange={(e) => setCatFormData({ ...catFormData, name: e.target.value })} placeholder="e.g. Festival Decor" className="w-full px-4 py-3 rounded-xl bg-light border border-dark/10 text-dark font-inter text-sm focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all" />
+                  </div>
+
+                  {/* Section */}
+                  <div>
+                    <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">Section *</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      {SECTIONS_LIST.map((s) => (
+                        <button key={s} type="button" onClick={() => setCatFormData({ ...catFormData, section: s })} className={`px-4 py-2.5 rounded-xl font-inter text-xs font-medium transition-all border text-left ${catFormData.section === s ? (s === 'Signature Events' ? 'bg-gold/10 border-gold/40 text-gold' : 'bg-primary/10 border-primary/30 text-primary') : 'bg-light border-dark/10 text-dark/60 hover:border-dark/20'}`}>
+                          {s === 'Signature Events' ? '✦ Signature Events' : '🏠 Social & Home'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Tagline + Detail */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">Tagline</label>
+                      <input value={catFormData.tagline} onChange={(e) => setCatFormData({ ...catFormData, tagline: e.target.value })} placeholder="Celebrate years of love" className="w-full px-4 py-3 rounded-xl bg-light border border-dark/10 text-dark font-inter text-sm focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">Detail line</label>
+                      <input value={catFormData.detail} onChange={(e) => setCatFormData({ ...catFormData, detail: e.target.value })} placeholder="Candles · Rose showers" className="w-full px-4 py-3 rounded-xl bg-light border border-dark/10 text-dark font-inter text-sm focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all" />
+                    </div>
+                  </div>
+
+                  {/* Accent color */}
+                  <div>
+                    <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">Accent Color</label>
+                    <div className="flex items-center gap-3 flex-wrap">
+                      {ACCENT_PRESETS.map((color) => (
+                        <button key={color} type="button" onClick={() => setCatFormData({ ...catFormData, accent: color })} className="w-7 h-7 rounded-full border-2 transition-all" style={{ background: color, borderColor: catFormData.accent === color ? '#000' : 'transparent' }} />
+                      ))}
+                      <input type="color" value={catFormData.accent} onChange={(e) => setCatFormData({ ...catFormData, accent: e.target.value })} className="w-8 h-8 rounded-full cursor-pointer border-0 bg-transparent" title="Custom color" />
+                    </div>
+                  </div>
+
+                  {/* Sub-categories */}
+                  <div>
+                    <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">Sub-categories</label>
+                    <div className="space-y-2">
+                      {catFormData.subCategories.map((sub, i) => (
+                        <div key={i} className="flex gap-2">
+                          <input value={sub} onChange={(e) => { const arr = [...catFormData.subCategories]; arr[i] = e.target.value; setCatFormData({ ...catFormData, subCategories: arr }); }} placeholder={`Sub-category ${i + 1}`} className="flex-1 px-4 py-2.5 rounded-xl bg-light border border-dark/10 text-dark font-inter text-sm focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all" />
+                          <button type="button" onClick={() => setCatFormData({ ...catFormData, subCategories: catFormData.subCategories.filter((_, j) => j !== i) })} className="p-2.5 rounded-xl text-dark/30 hover:text-red-500 hover:bg-red-50 transition-all"><X className="w-4 h-4" /></button>
+                        </div>
+                      ))}
+                      <button type="button" onClick={() => setCatFormData({ ...catFormData, subCategories: [...catFormData.subCategories, ''] })} className="flex items-center gap-1.5 text-xs font-inter text-primary hover:text-dark transition-colors mt-1">
+                        <Plus className="w-3.5 h-3.5" /> Add sub-category
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Image */}
+                  <div>
+                    <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">Category Image (shown on landing page)</label>
+                    {catFormData.image ? (
+                      <div className="relative w-full h-40 rounded-xl overflow-hidden group">
+                        <img src={catFormData.image} alt="category" className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-dark/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                          <button type="button" onClick={() => catFileInputRef.current?.click()} className="px-3 py-1.5 rounded-lg bg-white text-dark text-xs font-inter font-medium"><ImagePlus className="w-3.5 h-3.5 inline mr-1" />Change</button>
+                          <button type="button" onClick={() => setCatFormData({ ...catFormData, image: null })} className="px-3 py-1.5 rounded-lg bg-red-500 text-white text-xs font-inter font-medium">Remove</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button type="button" onClick={() => catFileInputRef.current?.click()} disabled={catUploadLoading} className="w-full h-32 rounded-xl border-2 border-dashed border-dark/15 hover:border-gold/40 flex flex-col items-center justify-center gap-2 transition-all text-dark/30 hover:text-gold">
+                        {catUploadLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : <><Upload className="w-6 h-6" /><span className="font-inter text-xs">Upload image</span></>}
+                      </button>
+                    )}
+                    <input ref={catFileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files && handleCatImageUpload(e.target.files)} />
+                  </div>
+                </div>
+                <div className="px-7 pb-6 pt-4 border-t border-dark/8 shrink-0 flex gap-3">
+                  <button type="button" onClick={() => setShowCatForm(false)} className="flex-1 py-3 rounded-xl border border-dark/10 font-inter text-sm text-dark/60 hover:bg-light transition-colors">Cancel</button>
+                  <button type="submit" disabled={catFormLoading} className="flex-1 py-3 rounded-xl btn-gold text-dark font-inter font-medium text-sm flex items-center justify-center gap-2 disabled:opacity-60">
+                    {catFormLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                    {editingCat ? 'Save Changes' : 'Create Category'}
+                  </button>
+                </div>
+              </form>
             </motion.div>
           </motion.div>
         )}
@@ -637,21 +865,22 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-dark/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-dark/60 backdrop-blur-sm z-50 flex flex-col justify-end md:items-center md:justify-center md:p-4"
             onClick={() => setShowForm(false)}
           >
             <motion.div
-              initial={{ scale: 0.95, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="bg-white rounded-3xl w-full max-w-2xl shadow-xl flex flex-col overflow-hidden"
-              style={{ maxHeight: '90vh' }}
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              className="bg-white rounded-t-3xl md:rounded-3xl w-full md:max-w-2xl shadow-xl flex flex-col overflow-hidden"
+              style={{ maxHeight: '92vh' }}
               onClick={(e) => e.stopPropagation()}
             >
+              <div className="w-10 h-1 bg-dark/15 rounded-full mx-auto mt-3 mb-1 shrink-0 md:hidden" />
               {/* Modal header */}
-              <div className="flex items-center justify-between px-7 py-5 border-b border-dark/10 shrink-0">
-                <h2 className="font-playfair text-xl font-semibold text-dark">
+              <div className="flex items-center justify-between px-5 py-4 md:px-7 md:py-5 border-b border-dark/10 shrink-0">
+                <h2 className="font-playfair text-lg md:text-xl font-semibold text-dark">
                   {editingProduct ? 'Edit Product' : 'Add New Product'}
                 </h2>
                 <button onClick={() => setShowForm(false)} className="p-2 rounded-xl text-dark/30 hover:text-dark hover:bg-light transition-all">
@@ -660,7 +889,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               </div>
 
               <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
-              <div className="flex-1 overflow-y-auto min-h-0 p-7 space-y-6">
+              <div className="flex-1 overflow-y-auto min-h-0 p-5 md:p-7 space-y-5 md:space-y-6">
                 {formError && (
                   <div className="flex items-center gap-2 bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm font-inter">
                     <AlertTriangle className="w-4 h-4 shrink-0" />
@@ -684,8 +913,8 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 {/* Section */}
                 <div>
                   <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">Section</label>
-                  <div className="grid grid-cols-2 gap-3">
-                    {['', ...SECTIONS].map((s) => (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    {(['', ...SECTIONS_LIST] as const).map((s) => (
                       <button
                         key={s}
                         type="button"
@@ -718,16 +947,14 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     >
                       <option value="">Select category...</option>
                       {formData.section ? (
-                        // Grouped by section when section is selected
-                        Object.keys(CATEGORY_STRUCTURE[formData.section as keyof typeof CATEGORY_STRUCTURE] || {}).map((cat) => (
+                        availableCategories.map((cat) => (
                           <option key={cat} value={cat}>{cat}</option>
                         ))
                       ) : (
-                        // All categories grouped by section
-                        SECTIONS.map((sec) => (
+                        SECTIONS_LIST.map((sec) => (
                           <optgroup key={sec} label={sec}>
-                            {Object.keys(CATEGORY_STRUCTURE[sec]).map((cat) => (
-                              <option key={cat} value={cat}>{cat}</option>
+                            {categories.filter((c) => c.section === sec).map((c) => (
+                              <option key={c._id} value={c.name}>{c.name}</option>
                             ))}
                           </optgroup>
                         ))
@@ -945,7 +1172,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               </div>
 
               {/* Sticky footer */}
-              <div className="px-7 pb-6 pt-4 border-t border-dark/8 shrink-0">
+              <div className="px-5 pb-5 pt-4 md:px-7 md:pb-6 border-t border-dark/8 shrink-0">
                 <div className="flex gap-3">
                   <button
                     type="button"
