@@ -264,7 +264,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     setCatFormError('');
     const payload = {
       name: catFormData.name.trim(),
-      section: catFormData.section,
+      section: catFormData.section as Category['section'],
       subCategories: catFormData.subCategories.filter((s) => s.trim()),
       tagline: catFormData.tagline.trim(),
       detail: catFormData.detail.trim(),
