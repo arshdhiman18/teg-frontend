@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { SlidersHorizontal, X, Search, Loader2 } from 'lucide-react';
+import { SlidersHorizontal, X, Search, Loader2, ArrowUp, ChevronDown } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
 import { getProducts, Product } from '@/lib/api';
 import { SECTIONS, CATEGORY_STRUCTURE, GENDER_OPTIONS, BUDGET_TAGS, getSubCategories } from '@/lib/categories';
@@ -256,6 +256,8 @@ function CollectionsContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(12);
+  const [showScrollTop, setShowScrollTop] = useState(false);
 
   const activeCount = countActiveFilters(filters);
   const hasSearch = !!filters.search;
@@ -298,9 +300,16 @@ function CollectionsContent() {
   }, [filters]);
 
   useEffect(() => {
+    setVisibleCount(12);
     const timer = setTimeout(fetchProducts, 300);
     return () => clearTimeout(timer);
   }, [fetchProducts]);
+
+  useEffect(() => {
+    const onScroll = () => setShowScrollTop(window.scrollY > 500);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   const allActiveChips = [
     filters.section && { label: filters.section === 'Social & Home Celebrations' ? 'Social & Home' : 'Signature', clear: () => patchFilters({ section: '', category: [], subCategory: '' }) },
@@ -416,9 +425,9 @@ function CollectionsContent() {
         )}
 
         {/* Results count */}
-        {!loading && (
+        {!loading && products.length > 0 && (
           <p className="font-inter text-sm text-dark/50 mb-6">
-            {products.length} {products.length === 1 ? 'setup' : 'setups'} found
+            Showing {Math.min(visibleCount, products.length)} of {products.length} {products.length === 1 ? 'setup' : 'setups'}
           </p>
         )}
 
@@ -459,24 +468,63 @@ function CollectionsContent() {
 
         {/* Grid */}
         {!loading && !error && products.length > 0 && (
-          <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <AnimatePresence mode="popLayout">
-              {products.map((product) => (
-                <motion.div
-                  key={product._id}
-                  layout
-                  initial={{ opacity: 0, scale: 0.96 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.96 }}
-                  transition={{ duration: 0.4 }}
+          <>
+            <motion.div layout className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
+              <AnimatePresence mode="popLayout">
+                {products.slice(0, visibleCount).map((product) => (
+                  <motion.div
+                    key={product._id}
+                    layout
+                    initial={{ opacity: 0, scale: 0.96 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.96 }}
+                    transition={{ duration: 0.4 }}
+                  >
+                    <ProductCard product={product} />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </motion.div>
+
+            {/* Load More */}
+            {visibleCount < products.length && (
+              <div className="flex justify-center mt-10 mb-4">
+                <button
+                  onClick={() => setVisibleCount((v) => v + 12)}
+                  className="flex items-center gap-2.5 px-8 py-4 rounded-2xl bg-white border border-dark/12 text-dark font-inter font-semibold text-sm hover:border-gold hover:text-gold hover:shadow-md transition-all duration-300 group"
                 >
-                  <ProductCard product={product} />
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </motion.div>
+                  <ChevronDown className="w-4 h-4 transition-transform duration-300 group-hover:translate-y-0.5" />
+                  Load More Events
+                  <span className="text-dark/35 font-normal">({products.length - visibleCount} remaining)</span>
+                </button>
+              </div>
+            )}
+
+            {/* All loaded indicator */}
+            {visibleCount >= products.length && products.length > 12 && (
+              <p className="text-center font-inter text-xs text-dark/30 mt-8">All {products.length} setups loaded</p>
+            )}
+          </>
         )}
       </div>
+
+      {/* ── Back to top (mobile only) ─────────────────────────────────── */}
+      <AnimatePresence>
+        {showScrollTop && (
+          <motion.button
+            key="scroll-top"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="lg:hidden fixed bottom-24 right-4 z-40 w-11 h-11 rounded-full bg-dark text-white shadow-luxury flex items-center justify-center"
+            aria-label="Back to top"
+          >
+            <ArrowUp className="w-4 h-4" />
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       {/* ── Mobile sticky filter button ────────────────────────────────── */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-30">
