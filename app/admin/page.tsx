@@ -901,8 +901,8 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           </td>
                           <td className="px-4 py-4 text-center hidden lg:table-cell">
                             <div className="flex items-center justify-center gap-1.5">
-                              {ev.featured && <Star className="w-4 h-4 text-gold fill-gold" title="Featured" />}
-                              {ev.fillingFast && <Zap className="w-4 h-4 text-red-500 fill-red-500" title="Filling Fast" />}
+                              {ev.featured && <Star className="w-4 h-4 text-gold fill-gold" />}
+                              {ev.fillingFast && <Zap className="w-4 h-4 text-red-500 fill-red-500" />}
                               {!ev.featured && !ev.fillingFast && <span className="text-dark/20 text-xs">—</span>}
                             </div>
                           </td>
