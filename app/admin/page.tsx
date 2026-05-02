@@ -22,6 +22,11 @@ import {
   Tag,
   ImagePlus,
   Copy,
+  Calendar,
+  MapPin,
+  Clock,
+  Zap,
+  Theater,
 } from 'lucide-react';
 import {
   getProducts,
@@ -36,6 +41,11 @@ import {
   updateCategory,
   deleteCategory,
   Category,
+  getEvents,
+  createEvent,
+  updateEvent,
+  deleteEvent,
+  Event,
 } from '@/lib/api';
 import { GENDER_OPTIONS, BUDGET_TAGS } from '@/lib/categories';
 
@@ -154,8 +164,27 @@ const emptyCatForm = {
   image: null as string | null,
 };
 
+const emptyEventForm = {
+  title: '',
+  description: '',
+  startDate: '',
+  endDate: '',
+  time: '',
+  duration: '',
+  ageLimit: '',
+  language: '',
+  genre: '',
+  venue: '',
+  otherVenues: [''] as string[],
+  price: '',
+  tags: [''] as string[],
+  featured: false,
+  fillingFast: false,
+  images: [] as string[],
+};
+
 function AdminDashboard({ onLogout }: { onLogout: () => void }) {
-  const [activeTab, setActiveTab] = useState<'products' | 'categories'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'events'>('products');
 
   // Products state
   const [products, setProducts] = useState<Product[]>([]);
@@ -182,17 +211,29 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [deleteCatConfirm, setDeleteCatConfirm] = useState<string | null>(null);
   const catFileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => { fetchProducts(); fetchCategories(); }, []);
+  // Events state
+  const [events, setEvents] = useState<Event[]>([]);
+  const [eventsLoading, setEventsLoading] = useState(true);
+  const [showEventForm, setShowEventForm] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  const [deleteEventConfirm, setDeleteEventConfirm] = useState<string | null>(null);
+  const [eventFormData, setEventFormData] = useState({ ...emptyEventForm });
+  const [eventFormLoading, setEventFormLoading] = useState(false);
+  const [eventUploadLoading, setEventUploadLoading] = useState(false);
+  const [eventFormError, setEventFormError] = useState('');
+  const eventFileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => { fetchProducts(); fetchCategories(); fetchEventsData(); }, []);
 
   useEffect(() => {
-    const open = showForm || !!deleteConfirm || showCatForm || !!deleteCatConfirm;
+    const open = showForm || !!deleteConfirm || showCatForm || !!deleteCatConfirm || showEventForm || !!deleteEventConfirm;
     document.documentElement.style.overflow = open ? 'hidden' : '';
     document.body.style.overflow = open ? 'hidden' : '';
     return () => {
       document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
     };
-  }, [showForm, deleteConfirm, showCatForm, deleteCatConfirm]);
+  }, [showForm, deleteConfirm, showCatForm, deleteCatConfirm, showEventForm, deleteEventConfirm]);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -220,6 +261,116 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       console.error(err.message);
     } finally {
       setCatsLoading(false);
+    }
+  };
+
+  const fetchEventsData = async () => {
+    setEventsLoading(true);
+    try {
+      const res = await getEvents({ limit: 500 });
+      setEvents(res.data);
+    } catch (err: any) {
+      console.error(err.message);
+    } finally {
+      setEventsLoading(false);
+    }
+  };
+
+  const openAddEventForm = () => {
+    setEditingEvent(null);
+    setEventFormData({ ...emptyEventForm });
+    setEventFormError('');
+    setShowEventForm(true);
+  };
+
+  const openEditEventForm = (ev: Event) => {
+    setEditingEvent(ev);
+    setEventFormData({
+      title: ev.title,
+      description: ev.description || '',
+      startDate: ev.startDate || '',
+      endDate: ev.endDate || '',
+      time: ev.time || '',
+      duration: ev.duration || '',
+      ageLimit: ev.ageLimit || '',
+      language: ev.language || '',
+      genre: ev.genre || '',
+      venue: ev.venue || '',
+      otherVenues: ev.otherVenues?.length ? ev.otherVenues : [''],
+      price: String(ev.price),
+      tags: ev.tags?.length ? ev.tags : [''],
+      featured: ev.featured || false,
+      fillingFast: ev.fillingFast || false,
+      images: ev.images || [],
+    });
+    setEventFormError('');
+    setShowEventForm(true);
+  };
+
+  const handleEventImageUpload = async (files: FileList) => {
+    if (!files.length) return;
+    setEventUploadLoading(true);
+    try {
+      const res = await uploadImages(Array.from(files));
+      setEventFormData((prev) => ({ ...prev, images: [...prev.images, ...res.urls] }));
+    } catch (err: any) {
+      setEventFormError('Image upload failed: ' + err.message);
+    } finally {
+      setEventUploadLoading(false);
+    }
+  };
+
+  const removeEventImage = (index: number) =>
+    setEventFormData((prev) => ({ ...prev, images: prev.images.filter((_, i) => i !== index) }));
+
+  const handleEventSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setEventFormLoading(true);
+    setEventFormError('');
+    const payload: Partial<Event> = {
+      title: eventFormData.title.trim(),
+      description: eventFormData.description.trim(),
+      startDate: eventFormData.startDate.trim(),
+      endDate: eventFormData.endDate.trim() || undefined,
+      time: eventFormData.time.trim(),
+      duration: eventFormData.duration.trim(),
+      ageLimit: eventFormData.ageLimit.trim(),
+      language: eventFormData.language.trim(),
+      genre: eventFormData.genre.trim(),
+      venue: eventFormData.venue.trim(),
+      otherVenues: eventFormData.otherVenues.filter((v) => v.trim()),
+      price: Number(eventFormData.price),
+      tags: eventFormData.tags.filter((t) => t.trim()),
+      featured: eventFormData.featured,
+      fillingFast: eventFormData.fillingFast,
+      images: eventFormData.images,
+    };
+    try {
+      if (editingEvent) {
+        const res = await updateEvent(editingEvent._id, payload);
+        setEvents((prev) => prev.map((ev) => (ev._id === editingEvent._id ? res.data : ev)));
+        showSuccess('Event updated successfully');
+      } else {
+        const res = await createEvent(payload);
+        setEvents((prev) => [res.data, ...prev]);
+        showSuccess('Event created successfully');
+      }
+      setShowEventForm(false);
+    } catch (err: any) {
+      setEventFormError(err.message || 'Something went wrong');
+    } finally {
+      setEventFormLoading(false);
+    }
+  };
+
+  const handleDeleteEvent = async (id: string) => {
+    try {
+      await deleteEvent(id);
+      setEvents((prev) => prev.filter((ev) => ev._id !== id));
+      setDeleteEventConfirm(null);
+      showSuccess('Event deleted successfully');
+    } catch (err: any) {
+      alert(err.message);
     }
   };
 
@@ -487,6 +638,13 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             <Tag className="w-4 h-4" />
             Categories
           </button>
+          <button
+            onClick={() => setActiveTab('events')}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-inter text-sm font-medium transition-all duration-300 ${activeTab === 'events' ? 'bg-dark text-white shadow-sm' : 'text-dark/50 hover:text-dark'}`}
+          >
+            <Calendar className="w-4 h-4" />
+            Events
+          </button>
         </div>
 
         {/* Stats */}
@@ -635,6 +793,136 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           )}
         </div>}
 
+        {/* Events tab */}
+        {activeTab === 'events' && (
+          <div className="bg-white rounded-3xl shadow-luxury overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-dark/5">
+              <h2 className="font-playfair text-xl font-semibold text-dark">Events</h2>
+              <button
+                onClick={openAddEventForm}
+                className="flex items-center gap-2 btn-gold text-dark font-inter font-medium text-sm px-4 py-2.5 rounded-xl"
+              >
+                <Plus className="w-4 h-4" />
+                Add Event
+              </button>
+            </div>
+
+            {eventsLoading ? (
+              <div className="flex items-center justify-center py-16">
+                <Loader2 className="w-6 h-6 text-primary animate-spin" />
+              </div>
+            ) : events.length === 0 ? (
+              <div className="text-center py-16">
+                <Calendar className="w-12 h-12 text-dark/20 mx-auto mb-4" />
+                <p className="font-inter text-dark/50 mb-4">No events yet</p>
+                <button onClick={openAddEventForm} className="text-primary font-inter text-sm hover:underline">Add your first event</button>
+              </div>
+            ) : (
+              <>
+                {/* Mobile list */}
+                <div className="md:hidden divide-y divide-dark/5">
+                  {events.map((ev, i) => (
+                    <motion.div key={ev._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }} className="flex items-center gap-3 px-4 py-3">
+                      {ev.images?.[0] ? (
+                        <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 relative">
+                          <Image src={ev.images[0]} alt={ev.title} fill className="object-cover" sizes="48px" />
+                        </div>
+                      ) : (
+                        <div className="w-12 h-12 rounded-xl bg-light shrink-0 flex items-center justify-center">
+                          <Calendar className="w-5 h-5 text-dark/20" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-inter font-semibold text-dark text-sm line-clamp-1">{ev.title}</p>
+                        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                          {ev.genre && <span className="font-inter text-[10px] text-dark/50 bg-light px-2 py-0.5 rounded-full">{ev.genre}</span>}
+                          {ev.featured && <Star className="w-3 h-3 text-gold fill-gold" />}
+                          {ev.fillingFast && <Zap className="w-3 h-3 text-red-500 fill-red-500" />}
+                        </div>
+                        <p className="font-playfair font-bold text-gold text-sm mt-1">{formatPrice(ev.price)} <span className="font-inter font-normal text-[10px] text-dark/40">onwards</span></p>
+                      </div>
+                      <div className="flex items-center gap-0.5 shrink-0">
+                        <button onClick={() => openEditEventForm(ev)} className="p-2 rounded-lg text-dark/25 hover:text-gold hover:bg-gold/10 transition-all"><Pencil className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => setDeleteEventConfirm(ev._id)} className="p-2 rounded-lg text-dark/25 hover:text-red-500 hover:bg-red-50 transition-all"><Trash2 className="w-3.5 h-3.5" /></button>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+
+                {/* Desktop table */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-dark/5">
+                        <th className="text-left px-6 py-3 text-xs font-inter font-semibold text-dark/40 uppercase tracking-wide">Event</th>
+                        <th className="text-left px-4 py-3 text-xs font-inter font-semibold text-dark/40 uppercase tracking-wide hidden lg:table-cell">Date</th>
+                        <th className="text-left px-4 py-3 text-xs font-inter font-semibold text-dark/40 uppercase tracking-wide">Venue</th>
+                        <th className="text-left px-4 py-3 text-xs font-inter font-semibold text-dark/40 uppercase tracking-wide">Price</th>
+                        <th className="text-left px-4 py-3 text-xs font-inter font-semibold text-dark/40 uppercase tracking-wide hidden lg:table-cell">Genre</th>
+                        <th className="text-center px-4 py-3 text-xs font-inter font-semibold text-dark/40 uppercase tracking-wide hidden lg:table-cell">Status</th>
+                        <th className="text-right px-6 py-3 text-xs font-inter font-semibold text-dark/40 uppercase tracking-wide">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {events.map((ev, i) => (
+                        <motion.tr key={ev._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }} className="border-b border-dark/5 hover:bg-light/50 transition-colors">
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              {ev.images?.[0] ? (
+                                <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 relative">
+                                  <Image src={ev.images[0]} alt={ev.title} fill className="object-cover" sizes="40px" />
+                                </div>
+                              ) : (
+                                <div className="w-10 h-10 rounded-lg bg-light shrink-0 flex items-center justify-center">
+                                  <Calendar className="w-4 h-4 text-dark/20" />
+                                </div>
+                              )}
+                              <div>
+                                <p className="font-inter font-medium text-dark text-sm line-clamp-1">{ev.title}</p>
+                                <p className="font-inter text-xs text-dark/40">{ev.slug}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-4 hidden lg:table-cell">
+                            <span className="font-inter text-xs text-dark/70">{ev.startDate || '—'}</span>
+                            {ev.time && <p className="font-inter text-[10px] text-dark/40 mt-0.5">{ev.time}</p>}
+                          </td>
+                          <td className="px-4 py-4">
+                            <span className="font-inter text-xs text-dark/70 line-clamp-1 max-w-[160px] block">{ev.venue || '—'}</span>
+                          </td>
+                          <td className="px-4 py-4">
+                            <span className="font-inter font-semibold text-sm text-gold">{formatPrice(ev.price)}</span>
+                            <span className="font-inter text-[10px] text-dark/40 ml-1">onwards</span>
+                          </td>
+                          <td className="px-4 py-4 hidden lg:table-cell">
+                            {ev.genre ? (
+                              <span className="font-inter text-xs px-2.5 py-1 rounded-full bg-dark/5 text-dark/60">{ev.genre}</span>
+                            ) : <span className="text-dark/30">—</span>}
+                          </td>
+                          <td className="px-4 py-4 text-center hidden lg:table-cell">
+                            <div className="flex items-center justify-center gap-1.5">
+                              {ev.featured && <Star className="w-4 h-4 text-gold fill-gold" title="Featured" />}
+                              {ev.fillingFast && <Zap className="w-4 h-4 text-red-500 fill-red-500" title="Filling Fast" />}
+                              {!ev.featured && !ev.fillingFast && <span className="text-dark/20 text-xs">—</span>}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center justify-end gap-2">
+                              <a href={`/events/${ev.slug || ev._id}`} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-lg text-dark/30 hover:text-primary hover:bg-primary/10 transition-all"><Eye className="w-4 h-4" /></a>
+                              <button onClick={() => openEditEventForm(ev)} className="p-1.5 rounded-lg text-dark/30 hover:text-gold hover:bg-gold/10 transition-all"><Pencil className="w-4 h-4" /></button>
+                              <button onClick={() => setDeleteEventConfirm(ev._id)} className="p-1.5 rounded-lg text-dark/30 hover:text-red-500 hover:bg-red-50 transition-all"><Trash2 className="w-4 h-4" /></button>
+                            </div>
+                          </td>
+                        </motion.tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
         {/* Categories tab */}
         {activeTab === 'categories' && (
           <div className="bg-white rounded-3xl shadow-luxury overflow-hidden">
@@ -697,6 +985,219 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           </div>
         )}
       </div>
+
+      {/* Delete event modal */}
+      <AnimatePresence>
+        {deleteEventConfirm && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-dark/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setDeleteEventConfirm(null)}>
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl" onClick={(e) => e.stopPropagation()}>
+              <div className="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center mb-4"><AlertTriangle className="w-6 h-6 text-red-500" /></div>
+              <h3 className="font-playfair text-xl font-semibold text-dark mb-2">Delete Event?</h3>
+              <p className="font-inter text-sm text-dark/60 mb-6">This action cannot be undone. The event and its images will be permanently removed.</p>
+              <div className="flex gap-3">
+                <button onClick={() => setDeleteEventConfirm(null)} className="flex-1 py-3 rounded-xl border border-dark/10 font-inter text-sm text-dark/60 hover:bg-light transition-colors">Cancel</button>
+                <button onClick={() => handleDeleteEvent(deleteEventConfirm)} className="flex-1 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-inter font-medium text-sm transition-colors">Delete</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Add/Edit event modal */}
+      <AnimatePresence>
+        {showEventForm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-dark/60 backdrop-blur-sm z-50 flex flex-col justify-end md:items-center md:justify-center md:p-4"
+            onClick={() => setShowEventForm(false)}
+          >
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              className="bg-white rounded-t-3xl md:rounded-3xl w-full md:max-w-2xl shadow-xl flex flex-col overflow-hidden"
+              style={{ maxHeight: '92vh' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="w-10 h-1 bg-dark/15 rounded-full mx-auto mt-3 mb-1 shrink-0 md:hidden" />
+              <div className="flex items-center justify-between px-5 py-4 md:px-7 md:py-5 border-b border-dark/10 shrink-0">
+                <h2 className="font-playfair text-lg md:text-xl font-semibold text-dark">
+                  {editingEvent ? 'Edit Event' : 'Add New Event'}
+                </h2>
+                <button onClick={() => setShowEventForm(false)} className="p-2 rounded-xl text-dark/30 hover:text-dark hover:bg-light transition-all">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleEventSubmit} className="flex flex-col flex-1 min-h-0">
+                <div className="flex-1 overflow-y-auto min-h-0 p-5 md:p-7 space-y-5 md:space-y-6">
+                  {eventFormError && (
+                    <div className="flex items-center gap-2 bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm font-inter">
+                      <AlertTriangle className="w-4 h-4 shrink-0" />
+                      {eventFormError}
+                    </div>
+                  )}
+
+                  {/* Title */}
+                  <div>
+                    <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">Title *</label>
+                    <input type="text" required value={eventFormData.title} onChange={(e) => setEventFormData({ ...eventFormData, title: e.target.value })} placeholder="e.g. Rock Bottom — A Standup Comedy Special" className="w-full px-4 py-3 rounded-xl bg-light border border-dark/10 text-dark font-inter text-sm focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all" />
+                  </div>
+
+                  {/* Date range */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">Start Date *</label>
+                      <input type="text" required value={eventFormData.startDate} onChange={(e) => setEventFormData({ ...eventFormData, startDate: e.target.value })} placeholder="e.g. Sun 3 May 2026" className="w-full px-4 py-3 rounded-xl bg-light border border-dark/10 text-dark font-inter text-sm focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">End Date</label>
+                      <input type="text" value={eventFormData.endDate} onChange={(e) => setEventFormData({ ...eventFormData, endDate: e.target.value })} placeholder="e.g. Sun 5 Jul 2026" className="w-full px-4 py-3 rounded-xl bg-light border border-dark/10 text-dark font-inter text-sm focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all" />
+                    </div>
+                  </div>
+
+                  {/* Time + Duration */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">Time</label>
+                      <input type="text" value={eventFormData.time} onChange={(e) => setEventFormData({ ...eventFormData, time: e.target.value })} placeholder="e.g. 8:00 PM" className="w-full px-4 py-3 rounded-xl bg-light border border-dark/10 text-dark font-inter text-sm focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">Duration</label>
+                      <input type="text" value={eventFormData.duration} onChange={(e) => setEventFormData({ ...eventFormData, duration: e.target.value })} placeholder="e.g. 1 hour 15 minutes" className="w-full px-4 py-3 rounded-xl bg-light border border-dark/10 text-dark font-inter text-sm focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all" />
+                    </div>
+                  </div>
+
+                  {/* Age limit + Language */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">Age Limit</label>
+                      <input type="text" value={eventFormData.ageLimit} onChange={(e) => setEventFormData({ ...eventFormData, ageLimit: e.target.value })} placeholder="e.g. 16yrs +" className="w-full px-4 py-3 rounded-xl bg-light border border-dark/10 text-dark font-inter text-sm focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">Language</label>
+                      <input type="text" value={eventFormData.language} onChange={(e) => setEventFormData({ ...eventFormData, language: e.target.value })} placeholder="e.g. Hindi, English" className="w-full px-4 py-3 rounded-xl bg-light border border-dark/10 text-dark font-inter text-sm focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all" />
+                    </div>
+                  </div>
+
+                  {/* Genre + Price */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">Genre</label>
+                      <input type="text" value={eventFormData.genre} onChange={(e) => setEventFormData({ ...eventFormData, genre: e.target.value })} placeholder="e.g. Comedy" className="w-full px-4 py-3 rounded-xl bg-light border border-dark/10 text-dark font-inter text-sm focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">Price (₹) *</label>
+                      <input type="number" required min="0" value={eventFormData.price} onChange={(e) => setEventFormData({ ...eventFormData, price: e.target.value })} placeholder="e.g. 399" className="w-full px-4 py-3 rounded-xl bg-light border border-dark/10 text-dark font-inter text-sm focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all" />
+                    </div>
+                  </div>
+
+                  {/* Venue */}
+                  <div>
+                    <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">Venue *</label>
+                    <input type="text" required value={eventFormData.venue} onChange={(e) => setEventFormData({ ...eventFormData, venue: e.target.value })} placeholder="e.g. The Laughter Foyer: Gurugram" className="w-full px-4 py-3 rounded-xl bg-light border border-dark/10 text-dark font-inter text-sm focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all" />
+                  </div>
+
+                  {/* Other venues */}
+                  <div>
+                    <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">Other Venues</label>
+                    <div className="space-y-2">
+                      {eventFormData.otherVenues.map((v, i) => (
+                        <div key={i} className="flex gap-2">
+                          <input value={v} onChange={(e) => { const arr = [...eventFormData.otherVenues]; arr[i] = e.target.value; setEventFormData({ ...eventFormData, otherVenues: arr }); }} placeholder={`Venue ${i + 1}`} className="flex-1 px-4 py-2.5 rounded-xl bg-light border border-dark/10 text-dark font-inter text-sm focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all" />
+                          <button type="button" onClick={() => setEventFormData({ ...eventFormData, otherVenues: eventFormData.otherVenues.filter((_, j) => j !== i) })} className="p-2.5 rounded-xl text-dark/30 hover:text-red-500 hover:bg-red-50 transition-all"><X className="w-4 h-4" /></button>
+                        </div>
+                      ))}
+                      <button type="button" onClick={() => setEventFormData({ ...eventFormData, otherVenues: [...eventFormData.otherVenues, ''] })} className="flex items-center gap-1.5 text-xs font-inter text-primary hover:text-dark transition-colors mt-1">
+                        <Plus className="w-3.5 h-3.5" /> Add venue
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Tags */}
+                  <div>
+                    <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">Tags</label>
+                    <div className="space-y-2">
+                      {eventFormData.tags.map((tag, i) => (
+                        <div key={i} className="flex gap-2">
+                          <input value={tag} onChange={(e) => { const arr = [...eventFormData.tags]; arr[i] = e.target.value; setEventFormData({ ...eventFormData, tags: arr }); }} placeholder={`e.g. Stand up Comedy`} className="flex-1 px-4 py-2.5 rounded-xl bg-light border border-dark/10 text-dark font-inter text-sm focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all" />
+                          <button type="button" onClick={() => setEventFormData({ ...eventFormData, tags: eventFormData.tags.filter((_, j) => j !== i) })} className="p-2.5 rounded-xl text-dark/30 hover:text-red-500 hover:bg-red-50 transition-all"><X className="w-4 h-4" /></button>
+                        </div>
+                      ))}
+                      <button type="button" onClick={() => setEventFormData({ ...eventFormData, tags: [...eventFormData.tags, ''] })} className="flex items-center gap-1.5 text-xs font-inter text-primary hover:text-dark transition-colors mt-1">
+                        <Plus className="w-3.5 h-3.5" /> Add tag
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">Description</label>
+                    <textarea rows={4} value={eventFormData.description} onChange={(e) => setEventFormData({ ...eventFormData, description: e.target.value })} placeholder="Describe this event..." className="w-full px-4 py-3 rounded-xl bg-light border border-dark/10 text-dark font-inter text-sm focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all resize-none" />
+                  </div>
+
+                  {/* Images */}
+                  <div>
+                    <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">Images</label>
+                    {eventFormData.images.length > 0 && (
+                      <div className="flex flex-wrap gap-3 mb-3">
+                        {eventFormData.images.map((url, i) => (
+                          <div key={i} className="relative group">
+                            <div className="w-20 h-20 rounded-xl overflow-hidden border border-dark/10 relative">
+                              <Image src={url} alt={`Image ${i + 1}`} fill className="object-cover" sizes="80px" />
+                            </div>
+                            <button type="button" onClick={() => removeEventImage(i)} className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
+                              <X className="w-3 h-3 text-white" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <input ref={eventFileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => e.target.files && handleEventImageUpload(e.target.files)} />
+                    <button type="button" onClick={() => eventFileInputRef.current?.click()} disabled={eventUploadLoading} className="flex items-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-dark/15 text-dark/50 hover:border-gold/40 hover:text-gold font-inter text-sm transition-all w-full justify-center">
+                      {eventUploadLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Uploading...</> : <><Upload className="w-4 h-4" /> Upload Images</>}
+                    </button>
+                  </div>
+
+                  {/* Featured + Filling Fast toggles */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-4 rounded-xl bg-light border border-dark/5">
+                      <div>
+                        <p className="font-inter font-medium text-sm text-dark">Featured Event</p>
+                        <p className="font-inter text-xs text-dark/50">Highlight on the events page</p>
+                      </div>
+                      <button type="button" onClick={() => setEventFormData({ ...eventFormData, featured: !eventFormData.featured })} className={`w-11 h-6 rounded-full transition-all duration-300 relative ${eventFormData.featured ? 'bg-gold' : 'bg-dark/20'}`}>
+                        <div className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all duration-300" style={{ left: eventFormData.featured ? '22px' : '2px' }} />
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between p-4 rounded-xl bg-light border border-dark/5">
+                      <div>
+                        <p className="font-inter font-medium text-sm text-dark">Filling Fast</p>
+                        <p className="font-inter text-xs text-dark/50">Show urgency badge on the card</p>
+                      </div>
+                      <button type="button" onClick={() => setEventFormData({ ...eventFormData, fillingFast: !eventFormData.fillingFast })} className={`w-11 h-6 rounded-full transition-all duration-300 relative ${eventFormData.fillingFast ? 'bg-red-500' : 'bg-dark/20'}`}>
+                        <div className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all duration-300" style={{ left: eventFormData.fillingFast ? '22px' : '2px' }} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="px-5 pb-5 pt-4 md:px-7 md:pb-6 border-t border-dark/8 shrink-0">
+                  <div className="flex gap-3">
+                    <button type="button" onClick={() => setShowEventForm(false)} className="flex-1 py-3.5 rounded-xl border border-dark/10 font-inter text-sm text-dark/60 hover:bg-light transition-colors">Cancel</button>
+                    <button type="submit" disabled={eventFormLoading} className="flex-1 flex items-center justify-center gap-2 btn-gold text-dark font-inter font-semibold py-3.5 rounded-xl text-sm disabled:opacity-60">
+                      {eventFormLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</> : <><Check className="w-4 h-4" /> {editingEvent ? 'Update Event' : 'Create Event'}</>}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Delete category modal */}
       <AnimatePresence>

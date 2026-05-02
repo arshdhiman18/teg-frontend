@@ -144,6 +144,71 @@ export const deleteCategory = async (id: string): Promise<{ success: boolean; me
   return response.data;
 };
 
+export interface Event {
+  _id: string;
+  title: string;
+  slug: string;
+  description: string;
+  images: string[];
+  startDate: string;
+  endDate?: string;
+  time: string;
+  duration: string;
+  ageLimit: string;
+  language: string;
+  genre: string;
+  venue: string;
+  otherVenues: string[];
+  price: number;
+  tags: string[];
+  featured: boolean;
+  fillingFast: boolean;
+  interestedCount: number;
+  createdAt: string;
+}
+
+export interface EventsResponse {
+  success: boolean;
+  total: number;
+  page: number;
+  pages: number;
+  data: Event[];
+}
+
+export const getEvents = async (filters: { genre?: string; featured?: boolean; search?: string; limit?: number; page?: number } = {}): Promise<EventsResponse> => {
+  const params: Record<string, string | number | boolean> = {};
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') params[key] = value;
+  });
+  const response = await api.get('/api/events', { params });
+  return response.data;
+};
+
+export const getEvent = async (id: string): Promise<{ success: boolean; data: Event }> => {
+  const response = await api.get(`/api/events/${id}`);
+  return response.data;
+};
+
+export const createEvent = async (data: Partial<Event>): Promise<{ success: boolean; data: Event }> => {
+  const response = await api.post('/api/events', data, { headers: { 'x-admin-key': ADMIN_KEY } });
+  return response.data;
+};
+
+export const updateEvent = async (id: string, data: Partial<Event>): Promise<{ success: boolean; data: Event }> => {
+  const response = await api.put(`/api/events/${id}`, data, { headers: { 'x-admin-key': ADMIN_KEY } });
+  return response.data;
+};
+
+export const deleteEvent = async (id: string): Promise<{ success: boolean; message: string }> => {
+  const response = await api.delete(`/api/events/${id}`, { headers: { 'x-admin-key': ADMIN_KEY } });
+  return response.data;
+};
+
+export const markEventInterest = async (id: string): Promise<{ success: boolean; interestedCount: number }> => {
+  const response = await api.patch(`/api/events/${id}/interest`);
+  return response.data;
+};
+
 export const formatPrice = (price: number): string =>
   new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(price);
 
