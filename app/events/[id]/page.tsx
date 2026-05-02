@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { getEvent, getEvents, markEventInterest, Event, EventPackage, formatPrice } from '@/lib/api';
 
-const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '919999999999';
+const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '918307068864';
 
 const GENRE_COLORS: Record<string, string> = {
   Comedy: 'bg-yellow-100 text-yellow-800 border-yellow-200',

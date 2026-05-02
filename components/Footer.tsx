@@ -7,8 +7,8 @@ import { Leaf, MessageCircle, Instagram, Facebook, Mail, Phone } from 'lucide-re
 const quickLinks = [
   { label: 'Home', href: '/' },
   { label: 'Collections', href: '/collections' },
+  { label: 'Events', href: '/events' },
   { label: 'Contact', href: '/contact' },
-  { label: 'Admin', href: '/admin' },
 ];
 
 const categories = [
@@ -21,7 +21,7 @@ const categories = [
 ];
 
 export default function Footer() {
-  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '919999999999';
+  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '918307068864';
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent('Hi, I would like to know more about your event planning services.')}`;
 
   return (
@@ -81,7 +81,7 @@ export default function Footer() {
                 <Facebook className="w-4 h-4" />
               </a>
               <a
-                href={`mailto:hello@theeventgardener.com`}
+                href={`mailto:support@theeventgardener.in`}
                 className="w-9 h-9 rounded-full border border-white/10 flex items-center justify-center text-white/40 hover:text-gold hover:border-gold/40 transition-all duration-300"
                 aria-label="Email"
               >
@@ -138,22 +138,22 @@ export default function Footer() {
             </h3>
             <div className="space-y-4">
               <a
-                href={`tel:+919999999999`}
+                href={`tel:+918307068864`}
                 className="flex items-center gap-3 text-white/50 hover:text-gold transition-colors duration-300 group"
               >
                 <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-gold/10 transition-colors">
                   <Phone className="w-3.5 h-3.5" />
                 </div>
-                <span className="font-inter text-sm">+91 99999 99999</span>
+                <span className="font-inter text-sm">+91 83070 68864</span>
               </a>
               <a
-                href="mailto:hello@theeventgardener.com"
+                href="mailto:support@theeventgardener.in"
                 className="flex items-center gap-3 text-white/50 hover:text-gold transition-colors duration-300 group"
               >
                 <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-gold/10 transition-colors">
                   <Mail className="w-3.5 h-3.5" />
                 </div>
-                <span className="font-inter text-sm">hello@theeventgardener.com</span>
+                <span className="font-inter text-sm">support@theeventgardener.in</span>
               </a>
               <a
                 href={whatsappUrl}

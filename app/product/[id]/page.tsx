@@ -53,7 +53,7 @@ export default function ProductPage() {
   const [selectedImage, setSelectedImage] = useState(0);
   const [activeTab, setActiveTab] = useState<Tab>('Package Includes');
   const [copied, setCopied] = useState(false);
-  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '919999999999';
+  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '918307068864';
 
   useEffect(() => {
     const fetchData = async () => {

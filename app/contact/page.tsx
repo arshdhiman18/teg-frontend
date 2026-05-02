@@ -43,7 +43,7 @@ export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '919999999999';
+  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '918307068864';
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent('Hi, I would like to plan an event with TEG. Please get in touch.')}`;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -122,8 +122,8 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <p className="text-xs font-inter text-dark/40 uppercase tracking-wide mb-0.5">Call Us</p>
-                  <a href="tel:+919999999999" className="font-inter font-medium text-dark hover:text-primary transition-colors">
-                    +91 99999 99999
+                  <a href="tel:+918307068864" className="font-inter font-medium text-dark hover:text-primary transition-colors">
+                    +91 83070 68864
                   </a>
                 </div>
               </div>
@@ -134,8 +134,8 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <p className="text-xs font-inter text-dark/40 uppercase tracking-wide mb-0.5">Email Us</p>
-                  <a href="mailto:hello@theeventgardener.com" className="font-inter font-medium text-dark hover:text-primary transition-colors">
-                    hello@theeventgardener.com
+                  <a href="mailto:support@theeventgardener.in" className="font-inter font-medium text-dark hover:text-primary transition-colors">
+                    support@theeventgardener.in
                   </a>
                 </div>
               </div>
