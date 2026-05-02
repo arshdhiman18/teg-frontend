@@ -290,6 +290,7 @@ function CollectionsContent() {
         minPrice: filters.priceRange[0] > 0 ? filters.priceRange[0] : undefined,
         maxPrice: filters.priceRange[1] < MAX_PRICE ? filters.priceRange[1] : undefined,
         search: filters.search || undefined,
+        limit: 500,
       });
       setProducts(res.data);
     } catch (err: any) {

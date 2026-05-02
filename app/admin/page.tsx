@@ -197,7 +197,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const res = await getProducts({ limit: 100 });
+      const res = await getProducts({ limit: 500 });
       setProducts(res.data);
     } catch (err: any) {
       console.error(err.message);
