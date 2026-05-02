@@ -144,8 +144,14 @@ function EventCard({ event }: { event: Event }) {
           {/* Footer: price + interested */}
           <div className="flex items-center justify-between mt-auto pt-3 border-t border-light">
             <div className="min-w-0">
-              <span className="font-playfair text-lg font-bold text-gold">{formatPrice(event.price)}</span>
-              <span className="font-inter text-[10px] text-dark/40 ml-1">onwards</span>
+              {event.price === 0 ? (
+                <span className="font-playfair text-lg font-bold text-green-600">Free</span>
+              ) : (
+                <>
+                  <span className="font-playfair text-lg font-bold text-gold">{formatPrice(event.price)}</span>
+                  <span className="font-inter text-[10px] text-dark/40 ml-1">onwards</span>
+                </>
+              )}
             </div>
             {event.interestedCount > 0 && (
               <div className="flex items-center gap-1.5 text-dark/40">

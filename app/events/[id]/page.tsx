@@ -99,8 +99,9 @@ export default function EventDetailPage() {
   const handleWhatsApp = () => {
     if (!event) return;
     const dateLabel = event.endDate ? `${event.startDate} - ${event.endDate}` : event.startDate;
+    const priceStr = event.price === 0 ? 'Free' : `${formatPrice(event.price)} onwards`;
     const message = encodeURIComponent(
-      `Hi, I'm interested in this event:\n\nEvent: ${event.title}\nDate: ${dateLabel}\nVenue: ${event.venue}\nPrice: ${formatPrice(event.price)} onwards\n\nPage: ${window.location.href}\n\nPlease share booking details.`
+      `Hi, I'm interested in this event:\n\nEvent: ${event.title}\nDate: ${dateLabel}\nVenue: ${event.venue}\nPrice: ${priceStr}\n\nPlease share booking details.`
     );
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, '_blank');
   };
@@ -129,6 +130,7 @@ export default function EventDetailPage() {
   }
 
   const dateLabel = event.endDate ? `${event.startDate} - ${event.endDate}` : event.startDate;
+  const isFree = event.price === 0;
   const genreStyle = GENRE_COLORS[event.genre] || 'bg-gray-100 text-gray-700 border-gray-200';
 
   return (
@@ -432,8 +434,14 @@ export default function EventDetailPage() {
               {/* Price + CTA */}
               <div>
                 <div className="flex items-baseline gap-1.5 mb-1">
-                  <span className="font-playfair text-2xl font-bold text-dark">{formatPrice(event.price)}</span>
-                  <span className="font-inter text-sm text-dark/50">onwards</span>
+                  {isFree ? (
+                    <span className="font-playfair text-2xl font-bold text-green-600">Free</span>
+                  ) : (
+                    <>
+                      <span className="font-playfair text-2xl font-bold text-dark">{formatPrice(event.price)}</span>
+                      <span className="font-inter text-sm text-dark/50">onwards</span>
+                    </>
+                  )}
                 </div>
                 {event.fillingFast && (
                   <p className="font-inter text-xs text-red-500 font-semibold flex items-center gap-1 mb-3">
@@ -487,7 +495,9 @@ export default function EventDetailPage() {
                             <span className="font-inter text-xs">{relDateLabel}</span>
                           </div>
                         )}
-                        <p className="font-playfair text-gold font-bold text-base mt-2">{formatPrice(rel.price)} <span className="font-inter text-xs font-normal text-dark/40">onwards</span></p>
+                        <p className="font-playfair font-bold text-base mt-2">
+                          {rel.price === 0 ? <span className="text-green-600">Free</span> : <><span className="text-gold">{formatPrice(rel.price)}</span> <span className="font-inter text-xs font-normal text-dark/40">onwards</span></>}
+                        </p>
                       </div>
                     </motion.div>
                   </Link>

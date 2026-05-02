@@ -1054,8 +1054,8 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       <input type="text" required value={eventFormData.startDate} onChange={(e) => setEventFormData({ ...eventFormData, startDate: e.target.value })} placeholder="e.g. Sun 3 May 2026" className="w-full px-4 py-3 rounded-xl bg-light border border-dark/10 text-dark font-inter text-sm focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all" />
                     </div>
                     <div>
-                      <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">End Date</label>
-                      <input type="text" value={eventFormData.endDate} onChange={(e) => setEventFormData({ ...eventFormData, endDate: e.target.value })} placeholder="e.g. Sun 5 Jul 2026" className="w-full px-4 py-3 rounded-xl bg-light border border-dark/10 text-dark font-inter text-sm focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all" />
+                      <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">End Date <span className="normal-case font-normal text-dark/30">— leave blank for 1-day</span></label>
+                      <input type="text" value={eventFormData.endDate} onChange={(e) => setEventFormData({ ...eventFormData, endDate: e.target.value })} placeholder="e.g. Sun 5 Jul 2026 (optional)" className="w-full px-4 py-3 rounded-xl bg-light border border-dark/10 text-dark font-inter text-sm focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all" />
                     </div>
                   </div>
 
@@ -1090,8 +1090,8 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       <input type="text" value={eventFormData.genre} onChange={(e) => setEventFormData({ ...eventFormData, genre: e.target.value })} placeholder="e.g. Comedy" className="w-full px-4 py-3 rounded-xl bg-light border border-dark/10 text-dark font-inter text-sm focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all" />
                     </div>
                     <div>
-                      <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">Price (₹) *</label>
-                      <input type="number" required min="0" value={eventFormData.price} onChange={(e) => setEventFormData({ ...eventFormData, price: e.target.value })} placeholder="e.g. 399" className="w-full px-4 py-3 rounded-xl bg-light border border-dark/10 text-dark font-inter text-sm focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all" />
+                      <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">Price (₹) <span className="normal-case font-normal text-dark/30">— 0 for Free</span></label>
+                      <input type="number" min="0" value={eventFormData.price} onChange={(e) => setEventFormData({ ...eventFormData, price: e.target.value })} placeholder="0 (Free)" className="w-full px-4 py-3 rounded-xl bg-light border border-dark/10 text-dark font-inter text-sm focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all" />
                     </div>
                   </div>
 
