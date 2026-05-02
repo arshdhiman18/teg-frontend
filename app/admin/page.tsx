@@ -177,6 +177,7 @@ const emptyEventForm = {
   venue: '',
   otherVenues: [''] as string[],
   price: '',
+  packages: [] as { label: string; price: string }[],
   tags: [''] as string[],
   featured: false,
   fillingFast: false,
@@ -298,6 +299,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       venue: ev.venue || '',
       otherVenues: ev.otherVenues?.length ? ev.otherVenues : [''],
       price: String(ev.price),
+      packages: ev.packages?.length ? ev.packages.map((p) => ({ label: p.label, price: String(p.price) })) : [],
       tags: ev.tags?.length ? ev.tags : [''],
       featured: ev.featured || false,
       fillingFast: ev.fillingFast || false,
@@ -339,7 +341,8 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       genre: eventFormData.genre.trim(),
       venue: eventFormData.venue.trim(),
       otherVenues: eventFormData.otherVenues.filter((v) => v.trim()),
-      price: Number(eventFormData.price),
+      price: Number(eventFormData.price) || 0,
+      packages: eventFormData.packages.filter((p) => p.label.trim()).map((p) => ({ label: p.label.trim(), price: Number(p.price) || 0 })),
       tags: eventFormData.tags.filter((t) => t.trim()),
       featured: eventFormData.featured,
       fillingFast: eventFormData.fillingFast,
@@ -1092,6 +1095,35 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     <div>
                       <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">Price (₹) <span className="normal-case font-normal text-dark/30">— 0 for Free</span></label>
                       <input type="number" min="0" value={eventFormData.price} onChange={(e) => setEventFormData({ ...eventFormData, price: e.target.value })} placeholder="0 (Free)" className="w-full px-4 py-3 rounded-xl bg-light border border-dark/10 text-dark font-inter text-sm focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all" />
+                    </div>
+                  </div>
+
+                  {/* Packages */}
+                  <div>
+                    <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-1">Packages <span className="normal-case font-normal text-dark/30">— optional, replaces single price on detail page</span></label>
+                    <div className="space-y-2">
+                      {eventFormData.packages.map((pkg, i) => (
+                        <div key={i} className="flex gap-2 items-center">
+                          <input
+                            value={pkg.label}
+                            onChange={(e) => { const arr = [...eventFormData.packages]; arr[i] = { ...arr[i], label: e.target.value }; setEventFormData({ ...eventFormData, packages: arr }); }}
+                            placeholder="e.g. Entry + paint + decor + DJ"
+                            className="flex-1 px-3 py-2.5 rounded-xl bg-light border border-dark/10 text-dark font-inter text-sm focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all"
+                          />
+                          <input
+                            type="number"
+                            min="0"
+                            value={pkg.price}
+                            onChange={(e) => { const arr = [...eventFormData.packages]; arr[i] = { ...arr[i], price: e.target.value }; setEventFormData({ ...eventFormData, packages: arr }); }}
+                            placeholder="₹"
+                            className="w-24 px-3 py-2.5 rounded-xl bg-light border border-dark/10 text-dark font-inter text-sm focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all"
+                          />
+                          <button type="button" onClick={() => setEventFormData({ ...eventFormData, packages: eventFormData.packages.filter((_, j) => j !== i) })} className="p-2.5 rounded-xl text-dark/30 hover:text-red-500 hover:bg-red-50 transition-all"><X className="w-4 h-4" /></button>
+                        </div>
+                      ))}
+                      <button type="button" onClick={() => setEventFormData({ ...eventFormData, packages: [...eventFormData.packages, { label: '', price: '' }] })} className="flex items-center gap-1.5 text-xs font-inter text-primary hover:text-dark transition-colors mt-1">
+                        <Plus className="w-3.5 h-3.5" /> Add package
+                      </button>
                     </div>
                   </div>
 

@@ -25,7 +25,7 @@ import {
   Check,
   ExternalLink,
 } from 'lucide-react';
-import { getEvent, getEvents, markEventInterest, Event, formatPrice } from '@/lib/api';
+import { getEvent, getEvents, markEventInterest, Event, EventPackage, formatPrice } from '@/lib/api';
 
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '919999999999';
 
@@ -98,10 +98,15 @@ export default function EventDetailPage() {
 
   const handleWhatsApp = () => {
     if (!event) return;
-    const dateLabel = event.endDate ? `${event.startDate} - ${event.endDate}` : event.startDate;
-    const priceStr = event.price === 0 ? 'Free' : `${formatPrice(event.price)} onwards`;
+    const dl = event.endDate ? `${event.startDate} - ${event.endDate}` : event.startDate;
+    let priceSection = '';
+    if (hasPackages) {
+      priceSection = '\nPackages:\n' + event.packages.map((p) => `  • ${formatPrice(p.price)} – ${p.label}`).join('\n');
+    } else {
+      priceSection = `\nPrice: ${event.price === 0 ? 'Free' : `${formatPrice(event.price)} onwards`}`;
+    }
     const message = encodeURIComponent(
-      `Hi, I'm interested in this event:\n\nEvent: ${event.title}\nDate: ${dateLabel}\nVenue: ${event.venue}\nPrice: ${priceStr}\n\nPlease share booking details.`
+      `Hi, I'm interested in this event:\n\nEvent: ${event.title}\nDate: ${dl}\nVenue: ${event.venue}${priceSection}\n\nPlease share booking details.`
     );
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, '_blank');
   };
@@ -130,7 +135,10 @@ export default function EventDetailPage() {
   }
 
   const dateLabel = event.endDate ? `${event.startDate} - ${event.endDate}` : event.startDate;
-  const isFree = event.price === 0;
+  const hasPackages = (event.packages?.length ?? 0) > 0;
+  const minPackagePrice = hasPackages ? Math.min(...event.packages.map((p) => p.price)) : null;
+  const displayPrice = hasPackages ? minPackagePrice! : event.price;
+  const isFree = !hasPackages && event.price === 0;
   const genreStyle = GENRE_COLORS[event.genre] || 'bg-gray-100 text-gray-700 border-gray-200';
 
   return (
@@ -431,18 +439,34 @@ export default function EventDetailPage() {
               {/* Divider */}
               <div className="h-px bg-dark/8" />
 
-              {/* Price + CTA */}
+              {/* Packages or Price + CTA */}
               <div>
-                <div className="flex items-baseline gap-1.5 mb-1">
-                  {isFree ? (
-                    <span className="font-playfair text-2xl font-bold text-green-600">Free</span>
-                  ) : (
-                    <>
-                      <span className="font-playfair text-2xl font-bold text-dark">{formatPrice(event.price)}</span>
-                      <span className="font-inter text-sm text-dark/50">onwards</span>
-                    </>
-                  )}
-                </div>
+                {hasPackages ? (
+                  <div className="mb-3">
+                    <p className="font-inter text-[10px] text-dark/40 uppercase tracking-wide mb-2">Packages</p>
+                    <div className="space-y-2">
+                      {event.packages.map((pkg, i) => (
+                        <div key={i} className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl bg-light border border-dark/5">
+                          <span className="font-inter text-xs text-dark/80 leading-snug">{pkg.label}</span>
+                          <span className="font-playfair font-bold text-sm text-dark shrink-0">
+                            {pkg.price === 0 ? <span className="text-green-600">Free</span> : formatPrice(pkg.price)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-baseline gap-1.5 mb-1">
+                    {isFree ? (
+                      <span className="font-playfair text-2xl font-bold text-green-600">Free</span>
+                    ) : (
+                      <>
+                        <span className="font-playfair text-2xl font-bold text-dark">{formatPrice(event.price)}</span>
+                        <span className="font-inter text-sm text-dark/50">onwards</span>
+                      </>
+                    )}
+                  </div>
+                )}
                 {event.fillingFast && (
                   <p className="font-inter text-xs text-red-500 font-semibold flex items-center gap-1 mb-3">
                     <Zap className="w-3 h-3 fill-red-500" />

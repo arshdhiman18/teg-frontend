@@ -144,14 +144,18 @@ function EventCard({ event }: { event: Event }) {
           {/* Footer: price + interested */}
           <div className="flex items-center justify-between mt-auto pt-3 border-t border-light">
             <div className="min-w-0">
-              {event.price === 0 ? (
-                <span className="font-playfair text-lg font-bold text-green-600">Free</span>
-              ) : (
-                <>
-                  <span className="font-playfair text-lg font-bold text-gold">{formatPrice(event.price)}</span>
-                  <span className="font-inter text-[10px] text-dark/40 ml-1">onwards</span>
-                </>
-              )}
+              {(() => {
+                const hasPackages = event.packages?.length > 0;
+                const minPkg = hasPackages ? Math.min(...event.packages.map((p) => p.price)) : null;
+                const displayPrice = hasPackages ? minPkg! : event.price;
+                if (displayPrice === 0 && !hasPackages) return <span className="font-playfair text-lg font-bold text-green-600">Free</span>;
+                return (
+                  <>
+                    <span className="font-playfair text-lg font-bold text-gold">{formatPrice(displayPrice)}</span>
+                    <span className="font-inter text-[10px] text-dark/40 ml-1">{hasPackages ? 'from' : 'onwards'}</span>
+                  </>
+                );
+              })()}
             </div>
             {event.interestedCount > 0 && (
               <div className="flex items-center gap-1.5 text-dark/40">

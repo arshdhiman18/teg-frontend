@@ -144,6 +144,11 @@ export const deleteCategory = async (id: string): Promise<{ success: boolean; me
   return response.data;
 };
 
+export interface EventPackage {
+  label: string;
+  price: number;
+}
+
 export interface Event {
   _id: string;
   title: string;
@@ -160,6 +165,7 @@ export interface Event {
   venue: string;
   otherVenues: string[];
   price: number;
+  packages: EventPackage[];
   tags: string[];
   featured: boolean;
   fillingFast: boolean;
