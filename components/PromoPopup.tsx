@@ -57,7 +57,7 @@ export default function PromoPopup() {
     <AnimatePresence>
       {visible && (
         <>
-          {/* Backdrop */}
+          {/* Backdrop — lighter so the page stays visible behind */}
           <motion.div
             key="backdrop"
             initial={{ opacity: 0 }}
@@ -65,7 +65,7 @@ export default function PromoPopup() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.4 }}
             className="fixed inset-0 z-[9990]"
-            style={{ background: 'rgba(4,10,9,0.82)', backdropFilter: 'blur(8px)' }}
+            style={{ background: 'rgba(4,10,9,0.60)', backdropFilter: 'blur(4px)' }}
             onClick={dismiss}
           />
 
@@ -79,16 +79,19 @@ export default function PromoPopup() {
             className="fixed z-[9991] inset-0 flex items-center justify-center p-4 pointer-events-none"
           >
             <div
-              className="relative w-full max-w-[420px] rounded-3xl overflow-hidden shadow-[0_32px_80px_rgba(0,0,0,0.6)] pointer-events-auto"
-              style={{ background: '#0d1a18' }}
+              className="relative w-full max-w-[420px] rounded-3xl overflow-hidden pointer-events-auto"
+              style={{
+                background: '#18281f',
+                boxShadow: '0 32px_80px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.08)',
+              }}
             >
               {/* Close button */}
               <button
                 onClick={dismiss}
                 className="absolute top-3.5 right-3.5 z-20 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110"
-                style={{ background: 'rgba(0,0,0,0.45)', border: '1px solid rgba(255,255,255,0.12)' }}
+                style={{ background: 'rgba(0,0,0,0.55)', border: '1px solid rgba(255,255,255,0.22)' }}
               >
-                <X className="w-4 h-4 text-white/80" />
+                <X className="w-4 h-4 text-white" />
               </button>
 
               {/* ── Image section ── */}
@@ -107,28 +110,33 @@ export default function PromoPopup() {
                 )}
 
                 {/* Gradient overlays */}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0d1a18] via-[#0d1a18]/30 to-transparent" />
-                <div className="absolute inset-0 bg-gradient-to-b from-black/30 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#18281f] via-[#18281f]/20 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-transparent" />
 
                 {/* Top badges */}
                 <div className="absolute top-3.5 left-3.5 flex gap-2">
-                  <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full font-inter text-[10px] font-semibold uppercase tracking-wider"
-                    style={{ background: 'rgba(198,167,105,0.18)', border: '1px solid rgba(198,167,105,0.35)', color: '#C6A769' }}>
+                  <span
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full font-inter text-[10px] font-semibold uppercase tracking-wider"
+                    style={{ background: 'rgba(198,167,105,0.30)', border: '1px solid rgba(198,167,105,0.60)', color: '#e8c97e' }}
+                  >
                     <Ticket className="w-3 h-3" />
                     Featured Event
                   </span>
                   {event.fillingFast && (
-                    <span className="flex items-center gap-1 px-2.5 py-1 rounded-full font-inter text-[10px] font-semibold bg-red-500/90 text-white">
+                    <span className="flex items-center gap-1 px-2.5 py-1 rounded-full font-inter text-[10px] font-semibold bg-red-500 text-white">
                       <Zap className="w-3 h-3 fill-white" />
                       Filling Fast
                     </span>
                   )}
                 </div>
 
-                {/* Genre tag bottom */}
+                {/* Genre tag */}
                 {event.genre && (
                   <div className="absolute bottom-14 left-4">
-                    <span className="px-2.5 py-0.5 rounded-full font-inter text-[10px] font-medium bg-white/10 text-white/70 border border-white/10">
+                    <span
+                      className="px-2.5 py-0.5 rounded-full font-inter text-[10px] font-medium text-white/90"
+                      style={{ background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.25)' }}
+                    >
                       {event.genre}
                     </span>
                   </div>
@@ -136,7 +144,10 @@ export default function PromoPopup() {
 
                 {/* Event title on image */}
                 <div className="absolute bottom-3 left-4 right-12">
-                  <h2 className="font-playfair text-white font-bold leading-snug" style={{ fontSize: 'clamp(1.1rem, 4vw, 1.35rem)' }}>
+                  <h2
+                    className="font-playfair text-white font-bold leading-snug"
+                    style={{ fontSize: 'clamp(1.1rem, 4vw, 1.35rem)', textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}
+                  >
                     {event.title}
                   </h2>
                 </div>
@@ -147,20 +158,29 @@ export default function PromoPopup() {
                 {/* Meta pills */}
                 <div className="flex flex-wrap gap-2 mb-4">
                   {event.startDate && (
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/8">
-                      <Calendar className="w-3 h-3 text-gold shrink-0" />
-                      <span className="font-inter text-xs text-white/70">{dateLabel}</span>
+                    <div
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
+                      style={{ background: 'rgba(255,255,255,0.09)', border: '1px solid rgba(255,255,255,0.18)' }}
+                    >
+                      <Calendar className="w-3 h-3 shrink-0" style={{ color: '#C6A769' }} />
+                      <span className="font-inter text-xs text-white/85">{dateLabel}</span>
                     </div>
                   )}
                   {event.time && (
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/8">
-                      <span className="font-inter text-xs text-white/70">{event.time}</span>
+                    <div
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
+                      style={{ background: 'rgba(255,255,255,0.09)', border: '1px solid rgba(255,255,255,0.18)' }}
+                    >
+                      <span className="font-inter text-xs text-white/85">{event.time}</span>
                     </div>
                   )}
                   {event.venue && (
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/8">
-                      <MapPin className="w-3 h-3 text-gold shrink-0" />
-                      <span className="font-inter text-xs text-white/70 line-clamp-1">{event.venue}</span>
+                    <div
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
+                      style={{ background: 'rgba(255,255,255,0.09)', border: '1px solid rgba(255,255,255,0.18)' }}
+                    >
+                      <MapPin className="w-3 h-3 shrink-0" style={{ color: '#C6A769' }} />
+                      <span className="font-inter text-xs text-white/85 line-clamp-1">{event.venue}</span>
                     </div>
                   )}
                 </div>
@@ -168,13 +188,16 @@ export default function PromoPopup() {
                 {/* Price + interested */}
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <p className="font-inter text-[10px] text-white/35 uppercase tracking-wide mb-0.5">Starting from</p>
-                    <p className="font-playfair text-2xl font-bold text-gold">{priceLabel}</p>
+                    <p className="font-inter text-[10px] text-white/55 uppercase tracking-wide mb-0.5">Starting from</p>
+                    <p className="font-playfair text-2xl font-bold" style={{ color: '#C6A769' }}>{priceLabel}</p>
                   </div>
                   {event.interestedCount > 0 && (
-                    <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/5 border border-white/8">
-                      <Users className="w-3.5 h-3.5 text-white/40" />
-                      <span className="font-inter text-xs text-white/50">{event.interestedCount} interested</span>
+                    <div
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl"
+                      style={{ background: 'rgba(255,255,255,0.09)', border: '1px solid rgba(255,255,255,0.18)' }}
+                    >
+                      <Users className="w-3.5 h-3.5 text-white/60" />
+                      <span className="font-inter text-xs text-white/70">{event.interestedCount} interested</span>
                     </div>
                   )}
                 </div>
@@ -182,7 +205,7 @@ export default function PromoPopup() {
                 {/* ── CTA ── */}
                 <button
                   onClick={handleCTA}
-                  className="group w-full relative overflow-hidden rounded-2xl py-4 font-inter font-bold text-sm flex items-center justify-center gap-2.5 transition-all duration-300 hover:shadow-[0_8px_30px_rgba(198,167,105,0.35)] active:scale-[0.98]"
+                  className="group w-full relative overflow-hidden rounded-2xl py-4 font-inter font-bold text-sm flex items-center justify-center gap-2.5 transition-all duration-300 hover:shadow-[0_8px_30px_rgba(198,167,105,0.40)] active:scale-[0.98]"
                   style={{
                     background: 'linear-gradient(135deg, #C6A769 0%, #e8c97e 50%, #C6A769 100%)',
                     backgroundSize: '200% 100%',
@@ -208,7 +231,7 @@ export default function PromoPopup() {
                 <div className="text-center mt-3">
                   <button
                     onClick={dismiss}
-                    className="font-inter text-xs text-white/25 hover:text-white/50 transition-colors"
+                    className="font-inter text-xs text-white/45 hover:text-white/70 transition-colors"
                   >
                     Maybe later
                   </button>
@@ -218,7 +241,7 @@ export default function PromoPopup() {
               {/* Ambient glow at bottom */}
               <div
                 className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-px"
-                style={{ background: 'linear-gradient(to right, transparent, rgba(198,167,105,0.4), transparent)' }}
+                style={{ background: 'linear-gradient(to right, transparent, rgba(198,167,105,0.5), transparent)' }}
               />
             </div>
           </motion.div>
