@@ -5,8 +5,6 @@ import Link from 'next/link';
 import { motion, AnimatePresence, useInView, useScroll, useTransform, type MotionValue } from 'framer-motion';
 import {
   ArrowRight,
-  ChevronLeft,
-  ChevronRight,
   Sparkles,
   Shield,
   IndianRupee,
@@ -101,6 +99,50 @@ function AnimatedSection({ children, className = '' }: { children: React.ReactNo
   );
 }
 
+function CategoryCard({ cat, index }: { cat: Category; index: number }) {
+  return (
+    <Link href={`/collections?mainCategory=${encodeURIComponent(cat.name)}`}>
+      <motion.div
+        className="relative rounded-xl sm:rounded-2xl cursor-pointer group aspect-[3/4]"
+        style={{ willChange: 'transform' }}
+        whileHover={{ scale: 1.03, y: -4 }}
+        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        custom={index}
+      >
+        {/* Inner clip — keeps overflow-hidden separate from scale transform */}
+        <div className="absolute inset-0 overflow-hidden rounded-xl sm:rounded-2xl">
+          {cat.image ? (
+            <img
+              src={cat.image}
+              alt={cat.name}
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              loading="lazy"
+            />
+          ) : (
+            <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${cat.gradientFrom}, ${cat.gradientTo})` }} />
+          )}
+          {/* Dark gradient overlay — stronger at bottom for title legibility */}
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.15) 50%, transparent 100%)' }} />
+          {/* Title */}
+          <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
+            <h3 className="font-cormorant text-white font-light leading-tight" style={{ fontSize: 'clamp(0.95rem, 1.8vw, 1.25rem)' }}>
+              {cat.name}
+            </h3>
+          </div>
+        </div>
+        {/* Accent ring outside clip so it's never cropped */}
+        <div
+          className="absolute inset-0 rounded-xl sm:rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+          style={{ boxShadow: `inset 0 0 0 1.5px ${cat.accent}70` }}
+        />
+      </motion.div>
+    </Link>
+  );
+}
+
 export default function HomePage() {
   const heroRef = useRef(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
@@ -118,13 +160,9 @@ export default function HomePage() {
   const w3Opacity = useTransform(titleProgress, [0.6, 0.78], [0, 1]);
   const w3Y = useTransform(titleProgress, [0.6, 0.78], [48, 0]);
 
-  // Categories section state
-  const [activeTab, setActiveTab] = useState<'social' | 'signature'>('social');
-  const [catIndex, setCatIndex] = useState(0);
+  // Categories
   const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [catsLoading, setCatsLoading] = useState(true);
-  const CAT_VISIBLE = 3;
-  const CARD_STEP = 320;
 
   useEffect(() => {
     getActiveCategories()
@@ -135,26 +173,6 @@ export default function HomePage() {
 
   const socialCats = allCategories.filter((c) => c.section === 'Social & Home Celebrations');
   const signatureCats = allCategories.filter((c) => c.section === 'Signature Events');
-  const activeCategories = activeTab === 'social' ? socialCats : signatureCats;
-  const catMaxIndex = Math.max(0, activeCategories.length - CAT_VISIBLE);
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  const scrollToIndex = (index: number) => {
-    scrollRef.current?.scrollTo({ left: index * CARD_STEP, behavior: 'smooth' });
-    setCatIndex(index);
-  };
-
-  const handleCarouselScroll = () => {
-    if (!scrollRef.current) return;
-    const idx = Math.min(Math.round(scrollRef.current.scrollLeft / CARD_STEP), catMaxIndex);
-    setCatIndex(idx);
-  };
-
-  const handleTabChange = (tab: 'social' | 'signature') => {
-    setActiveTab(tab);
-    setCatIndex(0);
-    setTimeout(() => scrollRef.current?.scrollTo({ left: 0, behavior: 'instant' }), 50);
-  };
 
   const whyTitleRef = useRef(null);
   const { scrollYProgress: whyProgress } = useScroll({ target: whyTitleRef, offset: ['start 0.88', 'start 0.1'] });
@@ -277,158 +295,56 @@ export default function HomePage() {
         </motion.div>
       </section>
 
-      {/* ===== FEATURED CATEGORIES — Two Tabs ===== */}
-      <section className="bg-white py-16 md:py-24 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 md:px-10">
+      {/* ===== FEATURED CATEGORIES — Grid ===== */}
+      <section className="bg-white py-14 md:py-20">
+        <div className="max-w-7xl mx-auto px-5 md:px-10">
 
           {/* Section heading */}
           <div className="mb-10">
             <p className="font-inter text-xs text-primary tracking-widest uppercase mb-3">Browse by Occasion</p>
-            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
-              <h2 className="font-cormorant font-light text-dark leading-[1.1]" style={{ fontSize: 'clamp(2.2rem, 3.5vw, 3.8rem)' }}>
-                Every Celebration<br />
-                <span className="text-gold font-medium">Deserves Magic</span>
-              </h2>
+            <h2 className="font-cormorant font-light text-dark leading-[1.1]" style={{ fontSize: 'clamp(2rem, 3.5vw, 3.5rem)' }}>
+              Every Celebration{' '}
+              <span className="text-gold font-medium">Deserves Magic</span>
+            </h2>
+          </div>
 
-              {/* Tabs + Nav */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                {/* Tab switcher */}
-                <div className="flex items-center gap-1 bg-light rounded-2xl p-1">
-                  <button
-                    onClick={() => handleTabChange('social')}
-                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-inter text-sm font-medium transition-all duration-300 ${
-                      activeTab === 'social'
-                        ? 'bg-dark text-white shadow-sm'
-                        : 'text-dark/50 hover:text-dark'
-                    }`}
-                  >
-                    <Home className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Social &amp; Home</span>
-                    <span className="sm:hidden">Social</span>
-                  </button>
-                  <button
-                    onClick={() => handleTabChange('signature')}
-                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-inter text-sm font-medium transition-all duration-300 ${
-                      activeTab === 'signature'
-                        ? 'bg-dark text-white shadow-sm'
-                        : 'text-dark/50 hover:text-dark'
-                    }`}
-                  >
-                    <Gem className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Signature Events</span>
-                    <span className="sm:hidden">Signature</span>
-                  </button>
-                </div>
-
-                {/* Carousel nav */}
-                <div className="hidden md:flex items-center gap-2">
-                  <button
-                    onClick={() => scrollToIndex(Math.max(0, catIndex - 1))}
-                    disabled={catIndex === 0}
-                    className="w-10 h-10 rounded-full border border-dark/20 flex items-center justify-center text-dark/60 transition-all duration-200 hover:border-dark hover:text-dark disabled:opacity-25 disabled:cursor-not-allowed"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => scrollToIndex(Math.min(catMaxIndex, catIndex + 1))}
-                    disabled={catIndex >= catMaxIndex}
-                    className="w-10 h-10 rounded-full border border-dark/20 flex items-center justify-center text-dark/60 transition-all duration-200 hover:border-dark hover:text-dark disabled:opacity-25 disabled:cursor-not-allowed"
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
+          {catsLoading ? (
+            <div className="flex items-center justify-center py-24">
+              <Loader2 className="w-6 h-6 text-primary animate-spin" />
             </div>
-
-            {/* Tab label */}
-            <AnimatePresence mode="wait">
-              <motion.p
-                key={activeTab}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.25 }}
-                className="font-inter text-sm text-dark/40 mt-3"
-              >
-                {activeTab === 'social'
-                  ? 'Birthdays, anniversaries, baby showers, proposals & more'
-                  : 'Premium luxury events, corporate, weddings & spiritual gatherings'}
-              </motion.p>
-            </AnimatePresence>
-          </div>
-
-          {/* Card track */}
-          <div ref={scrollRef} onScroll={handleCarouselScroll} className="overflow-x-auto -mx-6 px-6 md:-mx-10 md:px-10 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none' }}>
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeTab}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                {catsLoading ? (
-                  <div className="flex items-center justify-center py-24 w-full">
-                    <Loader2 className="w-6 h-6 text-primary animate-spin" />
+          ) : (
+            <>
+              {/* Social & Home Celebrations */}
+              {socialCats.length > 0 && (
+                <div className="mb-10">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Home className="w-3.5 h-3.5 text-primary" />
+                    <p className="font-inter text-xs font-semibold text-dark/45 uppercase tracking-widest">Social &amp; Home Celebrations</p>
                   </div>
-                ) : activeCategories.length === 0 ? (
-                  <div className="flex items-center justify-center py-24 w-full">
-                    <p className="font-inter text-sm text-dark/40">No events in this section yet</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
+                    {socialCats.map((cat, i) => (
+                      <CategoryCard key={cat._id} cat={cat} index={i} />
+                    ))}
                   </div>
-                ) : (
-                  <div className="flex gap-5 pb-1">
-                    {activeCategories.map((cat, i) => {
-                      const href = `/collections?mainCategory=${encodeURIComponent(cat.name)}`;
-                      const num = String(i + 1).padStart(2, '0');
-                      return (
-                        <Link key={cat._id} href={href} className="flex-shrink-0">
-                          <motion.div
-                            className="relative rounded-2xl cursor-pointer group"
-                            style={{ width: '300px', height: 'clamp(380px, 52vh, 500px)', willChange: 'transform' }}
-                            whileHover={{ scale: 1.02, y: -5 }}
-                            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                          >
-                            <div className="absolute inset-0 overflow-hidden rounded-2xl">
-                              {cat.image ? (
-                                <img src={cat.image} alt={cat.name} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
-                              ) : (
-                                <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${cat.gradientFrom}, ${cat.gradientTo})` }} />
-                              )}
-                              <div className="absolute inset-0" style={{ background: `linear-gradient(155deg, ${cat.gradientFrom}88, ${cat.gradientTo}aa)` }} />
-                              <div className="absolute top-0 left-6 right-6 h-px" style={{ background: `linear-gradient(90deg, transparent, ${cat.accent}60, transparent)` }} />
-                              <div className="absolute top-5 left-6 font-cormorant leading-none select-none pointer-events-none" style={{ fontSize: '5.5rem', fontWeight: 300, color: 'rgba(255,255,255,0.07)' }}>{num}</div>
-                              <div className="absolute bottom-0 left-0 right-0 p-6" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.88) 0%, transparent 100%)' }}>
-                                {cat.detail && <p className="font-inter text-[9px] tracking-[0.2em] uppercase mb-2.5" style={{ color: cat.accent, opacity: 0.85 }}>{cat.detail}</p>}
-                                <h3 className="font-cormorant text-white leading-none mb-2" style={{ fontSize: '2.1rem', fontWeight: 300 }}>{cat.name}</h3>
-                                {cat.tagline && <p className="font-inter text-xs text-white/40 mb-5 leading-relaxed">{cat.tagline}</p>}
-                                <div className="flex items-center gap-2" style={{ color: cat.accent, opacity: 0.55 }}>
-                                  <span className="font-inter text-[9px] tracking-widest uppercase group-hover:opacity-100 transition-opacity duration-300">Explore Setups</span>
-                                  <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform duration-300" />
-                                </div>
-                              </div>
-                            </div>
-                            <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style={{ boxShadow: `inset 0 0 0 1px ${cat.accent}45` }} />
-                          </motion.div>
-                        </Link>
-                      );
-                    })}
+                </div>
+              )}
+
+              {/* Signature Events */}
+              {signatureCats.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Gem className="w-3.5 h-3.5 text-gold" />
+                    <p className="font-inter text-xs font-semibold text-dark/45 uppercase tracking-widest">Signature Events</p>
                   </div>
-                )}
-              </motion.div>
-            </AnimatePresence>
-          </div>
-
-          {/* Dot indicators */}
-          <div className="hidden md:flex justify-start items-center gap-2 mt-8">
-            {Array.from({ length: catMaxIndex + 1 }).map((_, i) => (
-              <button
-                key={i}
-                onClick={() => scrollToIndex(i)}
-                className={`transition-all duration-300 rounded-full ${catIndex === i ? 'w-6 h-2 bg-dark' : 'w-2 h-2 bg-dark/20 hover:bg-dark/40'}`}
-              />
-            ))}
-          </div>
-
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
+                    {signatureCats.map((cat, i) => (
+                      <CategoryCard key={cat._id} cat={cat} index={i} />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </section>
 

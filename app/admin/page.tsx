@@ -1279,17 +1279,6 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     </div>
                   </div>
 
-                  {/* Tagline + Detail */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">Tagline</label>
-                      <input value={catFormData.tagline} onChange={(e) => setCatFormData({ ...catFormData, tagline: e.target.value })} placeholder="Celebrate years of love" className="w-full px-4 py-3 rounded-xl bg-light border border-dark/10 text-dark font-inter text-sm focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all" />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-inter font-semibold text-dark/60 uppercase tracking-wide mb-2">Detail line</label>
-                      <input value={catFormData.detail} onChange={(e) => setCatFormData({ ...catFormData, detail: e.target.value })} placeholder="Candles · Rose showers" className="w-full px-4 py-3 rounded-xl bg-light border border-dark/10 text-dark font-inter text-sm focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all" />
-                    </div>
-                  </div>
 
                   {/* Accent color */}
                   <div>
