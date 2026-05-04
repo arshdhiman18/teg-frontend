@@ -45,6 +45,7 @@ import {
   createEvent,
   updateEvent,
   deleteEvent,
+  setPromotionalEvent,
   Event,
 } from '@/lib/api';
 import { GENDER_OPTIONS, BUDGET_TAGS } from '@/lib/categories';
@@ -222,6 +223,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [eventFormLoading, setEventFormLoading] = useState(false);
   const [eventUploadLoading, setEventUploadLoading] = useState(false);
   const [eventFormError, setEventFormError] = useState('');
+  const [promoLoadingId, setPromoLoadingId] = useState<string | null>(null);
   const eventFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { fetchProducts(); fetchCategories(); fetchEventsData(); }, []);
@@ -274,6 +276,22 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       console.error(err.message);
     } finally {
       setEventsLoading(false);
+    }
+  };
+
+  const handleTogglePromo = async (ev: Event) => {
+    setPromoLoadingId(ev._id);
+    try {
+      const active = !ev.isPromotional;
+      await setPromotionalEvent(ev._id, active);
+      setEvents((prev) =>
+        prev.map((e) => ({ ...e, isPromotional: active ? e._id === ev._id : e._id === ev._id ? false : e.isPromotional }))
+      );
+      showSuccess(active ? `"${ev.title}" is now the promotional event` : 'Promotional event cleared');
+    } catch (err: any) {
+      console.error(err.message);
+    } finally {
+      setPromoLoadingId(null);
     }
   };
 
@@ -841,10 +859,19 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           {ev.genre && <span className="font-inter text-[10px] text-dark/50 bg-light px-2 py-0.5 rounded-full">{ev.genre}</span>}
                           {ev.featured && <Star className="w-3 h-3 text-gold fill-gold" />}
                           {ev.fillingFast && <Zap className="w-3 h-3 text-red-500 fill-red-500" />}
+                          {ev.isPromotional && <span className="px-1.5 py-0.5 rounded-full text-[9px] font-inter font-semibold bg-purple-100 text-purple-700">Promo</span>}
                         </div>
                         <p className="font-playfair font-bold text-gold text-sm mt-1">{formatPrice(ev.price)} <span className="font-inter font-normal text-[10px] text-dark/40">onwards</span></p>
                       </div>
                       <div className="flex items-center gap-0.5 shrink-0">
+                        <button
+                          onClick={() => handleTogglePromo(ev)}
+                          disabled={promoLoadingId === ev._id}
+                          className={`p-2 rounded-lg transition-all ${ev.isPromotional ? 'text-purple-600 bg-purple-50' : 'text-dark/25 hover:text-purple-500 hover:bg-purple-50'}`}
+                          title={ev.isPromotional ? 'Remove promo' : 'Set as promo'}
+                        >
+                          {promoLoadingId === ev._id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" style={{ color: ev.isPromotional ? '#9333ea' : undefined }} />}
+                        </button>
                         <button onClick={() => openEditEventForm(ev)} className="p-2 rounded-lg text-dark/25 hover:text-gold hover:bg-gold/10 transition-all"><Pencil className="w-3.5 h-3.5" /></button>
                         <button onClick={() => setDeleteEventConfirm(ev._id)} className="p-2 rounded-lg text-dark/25 hover:text-red-500 hover:bg-red-50 transition-all"><Trash2 className="w-3.5 h-3.5" /></button>
                       </div>
@@ -906,11 +933,20 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                             <div className="flex items-center justify-center gap-1.5">
                               {ev.featured && <Star className="w-4 h-4 text-gold fill-gold" />}
                               {ev.fillingFast && <Zap className="w-4 h-4 text-red-500 fill-red-500" />}
-                              {!ev.featured && !ev.fillingFast && <span className="text-dark/20 text-xs">—</span>}
+                              {ev.isPromotional && <span className="px-2 py-0.5 rounded-full text-[10px] font-inter font-semibold bg-purple-100 text-purple-700">Promo</span>}
+                              {!ev.featured && !ev.fillingFast && !ev.isPromotional && <span className="text-dark/20 text-xs">—</span>}
                             </div>
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={() => handleTogglePromo(ev)}
+                                disabled={promoLoadingId === ev._id}
+                                title={ev.isPromotional ? 'Remove promo popup' : 'Set as promo popup'}
+                                className={`p-1.5 rounded-lg transition-all ${ev.isPromotional ? 'text-purple-600 bg-purple-50' : 'text-dark/30 hover:text-purple-500 hover:bg-purple-50'}`}
+                              >
+                                {promoLoadingId === ev._id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+                              </button>
                               <a href={`/events/${ev.slug || ev._id}`} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-lg text-dark/30 hover:text-primary hover:bg-primary/10 transition-all"><Eye className="w-4 h-4" /></a>
                               <button onClick={() => openEditEventForm(ev)} className="p-1.5 rounded-lg text-dark/30 hover:text-gold hover:bg-gold/10 transition-all"><Pencil className="w-4 h-4" /></button>
                               <button onClick={() => setDeleteEventConfirm(ev._id)} className="p-1.5 rounded-lg text-dark/30 hover:text-red-500 hover:bg-red-50 transition-all"><Trash2 className="w-4 h-4" /></button>

@@ -169,6 +169,7 @@ export interface Event {
   tags: string[];
   featured: boolean;
   fillingFast: boolean;
+  isPromotional: boolean;
   interestedCount: number;
   createdAt: string;
 }
@@ -212,6 +213,16 @@ export const deleteEvent = async (id: string): Promise<{ success: boolean; messa
 
 export const markEventInterest = async (id: string): Promise<{ success: boolean; interestedCount: number }> => {
   const response = await api.patch(`/api/events/${id}/interest`);
+  return response.data;
+};
+
+export const getPromotionalEvent = async (): Promise<{ success: boolean; data: Event | null }> => {
+  const response = await api.get('/api/events/promotional');
+  return response.data;
+};
+
+export const setPromotionalEvent = async (id: string, active: boolean): Promise<{ success: boolean; data: Event }> => {
+  const response = await api.patch(`/api/events/${id}/promotional`, { active }, { headers: { 'x-admin-key': ADMIN_KEY } });
   return response.data;
 };
 

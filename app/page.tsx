@@ -15,6 +15,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { getActiveCategories, type Category } from '@/lib/api';
+import PromoPopup from '@/components/PromoPopup';
 
 const storyCards = [
   {
@@ -207,6 +208,7 @@ export default function HomePage() {
 
   return (
     <>
+      <PromoPopup />
       {/* ===== HERO SECTION ===== */}
       <section
         ref={heroRef}
