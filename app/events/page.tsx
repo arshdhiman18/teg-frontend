@@ -151,8 +151,8 @@ function EventCard({ event }: { event: Event }) {
                 if (displayPrice === 0 && !hasPackages) return <span className="font-playfair text-lg font-bold text-green-600">Free</span>;
                 return (
                   <>
+                    <span className="font-inter text-[10px] text-dark/40 mr-1">{hasPackages ? 'from' : 'onwards'}</span>
                     <span className="font-playfair text-lg font-bold text-gold">{formatPrice(displayPrice)}</span>
-                    <span className="font-inter text-[10px] text-dark/40 ml-1">{hasPackages ? 'from' : 'onwards'}</span>
                   </>
                 );
               })()}
