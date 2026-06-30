@@ -26,6 +26,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { getEvent, getEvents, markEventInterest, Event, EventPackage, formatPrice } from '@/lib/api';
+import WakingUpBanner from '@/components/WakingUpBanner';
 
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '918307068864';
 
@@ -117,6 +118,7 @@ export default function EventDetailPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-light flex items-center justify-center">
+        <WakingUpBanner loading={loading} />
         <Loader2 className="w-8 h-8 text-primary animate-spin" />
       </div>
     );

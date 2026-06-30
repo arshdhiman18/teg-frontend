@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -15,8 +15,10 @@ import {
   Star,
   ThumbsUp,
   ArrowUpRight,
+  X,
 } from 'lucide-react';
 import { getEvents, Event, formatPrice } from '@/lib/api';
+import WakingUpBanner from '@/components/WakingUpBanner';
 
 const GENRE_COLORS: Record<string, string> = {
   Comedy: 'bg-yellow-100 text-yellow-800',
@@ -173,26 +175,27 @@ function EventCard({ event }: { event: Event }) {
 export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [activeGenre, setActiveGenre] = useState('');
   const [genres, setGenres] = useState<string[]>([]);
 
-  useEffect(() => {
-    const fetchEvents = async () => {
-      setLoading(true);
-      try {
-        const res = await getEvents({ limit: 500 });
-        setEvents(res.data);
-        const uniqueGenres = Array.from(new Set(res.data.map((e) => e.genre).filter(Boolean)));
-        setGenres(uniqueGenres);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchEvents();
+  const fetchEvents = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await getEvents({ limit: 500 });
+      setEvents(res.data);
+      const uniqueGenres = Array.from(new Set(res.data.map((e) => e.genre).filter(Boolean)));
+      setGenres(uniqueGenres);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load events');
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => { fetchEvents(); }, [fetchEvents]);
 
   const filtered = events.filter((e) => {
     const matchesGenre = !activeGenre || e.genre === activeGenre;
@@ -206,6 +209,7 @@ export default function EventsPage() {
 
   return (
     <div className="min-h-screen bg-light pt-24 pb-16">
+      <WakingUpBanner loading={loading} />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Header */}
@@ -273,7 +277,7 @@ export default function EventsPage() {
         </motion.div>
 
         {/* Results count */}
-        {!loading && (
+        {!loading && !error && (
           <p className="font-inter text-xs text-dark/40 mb-5">
             {filtered.length} event{filtered.length !== 1 ? 's' : ''} found
           </p>
@@ -283,6 +287,16 @@ export default function EventsPage() {
         {loading ? (
           <div className="flex items-center justify-center py-24">
             <Loader2 className="w-8 h-8 text-primary animate-spin" />
+          </div>
+        ) : error ? (
+          <div className="text-center py-20">
+            <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+              <X className="w-8 h-8 text-red-400" />
+            </div>
+            <p className="font-inter text-dark/60 mb-4">{error}</p>
+            <button onClick={fetchEvents} className="text-sm font-inter text-primary hover:underline">
+              Try again
+            </button>
           </div>
         ) : filtered.length === 0 ? (
           <motion.div

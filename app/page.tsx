@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { getActiveCategories, type Category } from '@/lib/api';
 import PromoPopup from '@/components/PromoPopup';
+import WakingUpBanner from '@/components/WakingUpBanner';
 
 const storyCards = [
   {
@@ -208,6 +209,7 @@ export default function HomePage() {
 
   return (
     <>
+      <WakingUpBanner loading={catsLoading} />
       <PromoPopup />
       {/* ===== HERO SECTION ===== */}
       <section

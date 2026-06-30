@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SlidersHorizontal, X, Search, Loader2, ArrowUp, ChevronDown } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
+import WakingUpBanner from '@/components/WakingUpBanner';
 import { getProducts, Product } from '@/lib/api';
 import { SECTIONS, CATEGORY_STRUCTURE, GENDER_OPTIONS, BUDGET_TAGS, getSubCategories } from '@/lib/categories';
 
@@ -327,6 +328,7 @@ function CollectionsContent() {
 
   return (
     <div className="min-h-screen bg-light">
+      <WakingUpBanner loading={loading} />
       {/* Header */}
       <div className="bg-dark pt-32 pb-16 px-4 text-center">
         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
